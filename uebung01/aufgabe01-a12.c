@@ -3,19 +3,20 @@
 //
 #include <stdio.h>
 #include <stdlib.h>
+
 int main (int argc, char *argv[]) {
     int anzName = atoi(argv[1]);
-    char *namen[5] = {0};
+    char **namen;
+    namen = (char **) malloc(anzName * sizeof(char *));
 
-    printf("NAMEN DÜRFEN NICHT LÄNGER ALS 20 ZEICHEN SEIN !!11!11!\n");
     for (int i = 0;i < anzName; i++) {
-        printf("Geben sie den %i. Namen ein\n", i+1);
-        scanf("%s", namen[i]);
-        printf("Danke :) \n");
+        namen[i] = (char *) malloc(100 * sizeof(char));
+        printf("Geben Sie den %i. Namen ein\n",i+1);
+        fgets(namen[i],100,stdin);
     }
 
     printf("\n\nUmgedrehte Namen:\n");
-    for (int i = anzName-1;i >= 0; i--) {
-        printf("%i. Name : %s\n", i+1, namen[i]);
+    for(int i=anzName-1;i>=0;i--) {
+        printf("%i. Name: %s\n",i+1,namen[i]);
     }
 }
