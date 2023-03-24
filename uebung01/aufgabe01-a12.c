@@ -18,5 +18,7 @@ int main (int argc, char *argv[]) {
     printf("\n\nUmgedrehte Namen:\n");
     for(int i=anzName-1;i>=0;i--) {
         printf("%i. Name: %s\n",i+1,namen[i]);
+	free(namen[i]);
     }
+    free(namen);
 }
