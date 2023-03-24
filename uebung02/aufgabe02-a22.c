@@ -68,13 +68,20 @@ int main (int argc, char *argv[]) {
 			pid_t pid;
 			while(n > 0){
 				pid = wait(&status);
-				if(WIFSIGNALED(status) || WIFEXITED(status)) {
+				if(WIFEXITED(status)) {
 					exitstatus = WEXITSTATUS(status);
-					exitsignal = WTERMSIG(status);
 					printf(
-						"Child-Prozess mit Process-ID %i endete mit Status %i und Signal %i (von wait() gesetzter Status: %i)\n",
+						"Child-Prozess mit Process-ID %i endete mit Status %i (von wait() gesetzter Status: %i)\n",
 						(int)pid,
 						exitstatus,
+						(int) status
+					);
+				}
+				if(WIFSIGNALED(status)) {
+					exitsignal = WTERMSIG(status);
+					printf(
+						"Child-Prozess mit Process-ID %i endete durch Signal %i (von wait() gesetzter Status: %i)\n",
+						(int)pid,
 						exitsignal,
 						(int) status
 					);
