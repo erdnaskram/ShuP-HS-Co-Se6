@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 int main (int argc, char *argv[]) {
 	if(argc<5) {
@@ -47,21 +49,39 @@ int main (int argc, char *argv[]) {
 			printf("Aufrufparameter %i: %s\n",processFunction+1,argv[processFunction+1]);
 			printf("Child%i-Process-ID: %i\n",processFunction, getpid());
 			while(1) { sleep(1); }
-			break; // ToDo: Rest implementieren!
+			break;
 		case 3:
 			// C3
 			printf("Aufrufparameter %i: %s\n",processFunction+1,argv[processFunction+1]);
 			printf("Child%i-Process-ID: %i\n",processFunction, getpid());
 			sleep(1);
 			exit(2);
-			break; // ToDo: Rest implementieren!
+			break;
 		default:
 			// Parent
 			sleep(2);
 			kill(pc1,15); // 15 = SIGTERM!
 			kill(pc2,9); // 9 = SIGKILL!
 			kill(pc3,9); // 9 = SIGKILL!
-			// ToDo: Endestatus für C1, C2, C3 holen und ausgeben
+
+			int status,n=3,exitstatus,exitsignal;
+			pid_t pid;
+			while(n > 0){
+				pid = wait(&status);
+				if(WIFSIGNALED(status) || WIFEXITED(status)) {
+					exitstatus = WEXITSTATUS(status);
+					exitsignal = WTERMSIG(status);
+					printf(
+						"Child-Prozess mit Process-ID %i endete mit Status %i und Signal %i (von wait() gesetzter Status: %i)\n",
+						(int)pid,
+						exitstatus,
+						exitsignal,
+						(int) status
+					);
+				}
+				--n;
+			}
+
 			exit(0);
 	}
 }
