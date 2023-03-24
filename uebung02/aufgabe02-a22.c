@@ -59,8 +59,8 @@ int main (int argc, char *argv[]) {
 			// Parent
 			sleep(2);
 			kill(pc1,15); // 15 = SIGTERM!
-			kill(pc2,9); // 9 = SIGTERM!
-			kill(pc3,9); // 9 = SIGTERM!
+			kill(pc2,9); // 9 = SIGKILL!
+			kill(pc3,9); // 9 = SIGKILL!
 			// ToDo: Endestatus für C1, C2, C3 holen und ausgeben
 			exit(0);
 	}
