@@ -21,9 +21,9 @@ int main (int argc, char *argv[]) {
 
 // Kind-Prozess zuerst beendet
 
-// root@jh-shup:~/shup/uebung02# ./a.out &
+// root@jh-shup:~/shup/blatt2# ./a.out &
 // [1] 8622
-// root@jh-shup:~/shup/uebung02# Process-ID: 8622
+// root@jh-shup:~/shup/blatt2# Process-ID: 8622
 // Parent-Process-ID: 8481
 // Process-ID: 8623
 // Parent-Process-ID: 8622
@@ -33,15 +33,15 @@ int main (int argc, char *argv[]) {
 //   8622 pts/3    00:00:00 a.out
 //   8623 pts/3    00:00:00 a.out
 //   8624 pts/3    00:00:00 ps
-//root@jh-shup:~/shup/uebung02# kill -9 8623
-//root@jh-shup:~/shup/uebung02# ps
+//root@jh-shup:~/shup/blatt2# kill -9 8623
+//root@jh-shup:~/shup/blatt2# ps
 //    PID TTY          TIME CMD
 //   8481 pts/3    00:00:00 bash
 //   8622 pts/3    00:00:00 a.out
 //   8623 pts/3    00:00:00 a.out <defunct>
 //   8625 pts/3    00:00:00 ps
-// root@jh-shup:~/shup/uebung02# kill -9 8622
-// root@jh-shup:~/shup/uebung02# ps
+// root@jh-shup:~/shup/blatt2# kill -9 8622
+// root@jh-shup:~/shup/blatt2# ps
 //     PID TTY          TIME CMD
 //    8481 pts/3    00:00:00 bash
 //    8626 pts/3    00:00:00 ps
@@ -52,11 +52,11 @@ int main (int argc, char *argv[]) {
 
 // Parent-Prozess zuerst beendet
 
-// root@jh-shup:~/shup/uebung02# kill -9 8613
+// root@jh-shup:~/shup/blatt2# kill -9 8613
 // -bash: kill: (8613) - Kein passender Prozess gefunden
-// root@jh-shup:~/shup/uebung02# ./a.out &
+// root@jh-shup:~/shup/blatt2# ./a.out &
 // [1] 8617
-// root@jh-shup:~/shup/uebung02# Process-ID: 8617
+// root@jh-shup:~/shup/blatt2# Process-ID: 8617
 // Parent-Process-ID: 8481
 // Process-ID: 8618
 // Parent-Process-ID: 8617
@@ -66,15 +66,15 @@ int main (int argc, char *argv[]) {
 //    8617 pts/3    00:00:00 a.out
 //    8618 pts/3    00:00:00 a.out
 //    8619 pts/3    00:00:00 ps
-// root@jh-shup:~/shup/uebung02# kill -9 8617
-// root@jh-shup:~/shup/uebung02# ps
+// root@jh-shup:~/shup/blatt2# kill -9 8617
+// root@jh-shup:~/shup/blatt2# ps
 //     PID TTY          TIME CMD
 //    8481 pts/3    00:00:00 bash
 //    8618 pts/3    00:00:00 a.out
 //    8620 pts/3    00:00:00 ps
 // [1]+  Getötet                ./a.out
-// root@jh-shup:~/shup/uebung02# kill -9 8618
-// root@jh-shup:~/shup/uebung02# ps
+// root@jh-shup:~/shup/blatt2# kill -9 8618
+// root@jh-shup:~/shup/blatt2# ps
 //     PID TTY          TIME CMD
 //    8481 pts/3    00:00:00 bash
 //    8621 pts/3    00:00:00 ps
