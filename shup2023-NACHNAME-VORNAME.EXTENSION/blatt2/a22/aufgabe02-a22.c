@@ -20,13 +20,24 @@ int main (int argc, char *argv[]) {
 
 	int pc1,pc2,pc3,processFunction;
 	pc1 = fork();
-	if(getpid() == mainpid) {
+
+	//bei Fehler Abbrechen
+	if(pc1 == -1)
+		return(1);
+
+	if(pc1 != 0) {
 		// Parent (Nach C1, erstelle C2)
 		pc2 = fork();
-		if(getpid() == mainpid) {
+
+		if(pc2 == -1)
+			return(1);
+		if(pc2 != 0) {
 			// Parent (Nach C2, erstelle C3)
 			pc3 = fork();
-			if(getpid() == mainpid) {
+
+			if(pc3 == -1)
+				return(1);
+			if(pc3 != 0) {
 				// Parent (Final, setze prozessFunktion)
 				processFunction = 0;
 			} else {
@@ -48,7 +59,7 @@ int main (int argc, char *argv[]) {
 			// C1+C2
 			printf("Aufrufparameter %i: %s\n",processFunction+1,argv[processFunction+1]);
 			printf("Child%i-Process-ID: %i\n",processFunction, getpid());
-			while(1) { sleep(1); }
+			while(1);
 			break;
 		case 3:
 			// C3

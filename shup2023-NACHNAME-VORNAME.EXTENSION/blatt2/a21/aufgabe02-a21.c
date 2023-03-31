@@ -4,12 +4,11 @@
 #include <stdio.h>
 #include <unistd.h>
 
-int main (int argc, char *argv[]) {
-	fork();
-	printf("Process-ID: %i\n",getpid());
-	printf("Parent-Process-ID: %i\n",getppid());
-	while(1)
-		sleep(1);
+int main(int argc, char *argv[]) {
+    fork();
+    printf("Process-ID: %i\n", getpid());
+    printf("Parent-Process-ID: %i\n", getppid());
+    while (1);
 }
 
 // Ergebnisse:
