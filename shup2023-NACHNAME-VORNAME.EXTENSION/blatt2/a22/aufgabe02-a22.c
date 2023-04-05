@@ -75,16 +75,16 @@ int main (int argc, char *argv[]) {
 			kill(pc2,9); // 9 = SIGKILL!
 			kill(pc3,9); // 9 = SIGKILL!
 
-			int status,n=3,exitstatus,exitsignal;
+			int status,exitsignal;
 			pid_t pid;
-			while(n > 0){
+			for (int n = 3; n > 0; n--){
 				pid = wait(&status);
 				if(WIFEXITED(status)) {
-					exitstatus = WEXITSTATUS(status);
+					exitsignal = WEXITSTATUS(status);
 					printf(
 						"Child-Prozess mit Process-ID %i endete mit Status %i (von wait() gesetzter Status: %i)\n",
 						(int)pid,
-						exitstatus,
+						exitsignal,
 						(int) status
 					);
 				}
@@ -97,7 +97,6 @@ int main (int argc, char *argv[]) {
 						(int) status
 					);
 				}
-				--n;
 			}
 
 			exit(0);
