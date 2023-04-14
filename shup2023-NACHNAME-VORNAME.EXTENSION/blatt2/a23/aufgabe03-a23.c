@@ -23,7 +23,7 @@ void sigtermhandler(int signb){
 	counter++;
 	printf("Signal: %i eingetroffen\n", signb);
 	if(counter == 3){
-		printf("Programm beendet sich");
+		printf("Programm beendet sich\n");
 		exit(5);
 	}
 }
