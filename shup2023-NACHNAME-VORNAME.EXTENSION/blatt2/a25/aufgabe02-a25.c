@@ -13,7 +13,12 @@ void setColor(int color) {
 int main(int argc, char *argv[]) {
     setColor(32);
     printf("%s@HOST", getenv("USER"), getenv("PWD"));
-    printf("%s@HOST:%s$ ", getenv("USER"), getenv("PWD"));
+    setColor(0);
+    printf(":");
+    setColor(34);
+    printf("%s ", getenv("PWD"));
+    setColor(0);
+    printf("$ ");
 
 
 
