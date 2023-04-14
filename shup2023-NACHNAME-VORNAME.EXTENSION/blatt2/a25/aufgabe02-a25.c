@@ -10,15 +10,19 @@ void setColor(int color) {
     printf("\033[0;%dm", color);
 }
 
-int main(int argc, char *argv[]) {
+void printPrompt() {
     setColor(32);
-    printf("%s@HOST", getenv("USER"), getenv("PWD"));
+    printf("%s@HOST-NAME", getenv("USER"), getenv("PWD"));
     setColor(0);
     printf(":");
     setColor(34);
     printf("%s ", getenv("PWD"));
     setColor(0);
     printf("$ ");
+}
+
+int main(int argc, char *argv[]) {
+    printPrompt();
 
 
 
