@@ -9,9 +9,9 @@ int main(int argc, char *argv[]) {
 
     //Child
     if (child == 0) {
-        int value = 0;
+
         if (argc == 2) {
-            value = execl(argv[1], argv[1], "", "", (char *) NULL);
+            execl(argv[1], argv[1], "", "", (char *) NULL);
         } else {
 
             for (int i = 1; i < argc; i++) {
@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
             }
             argv[argc - 1] = NULL;
 
-            value = execv(argv[0], argv);
+            execv(argv[0], argv);
         }
 
         printf("EXIT #####1#####\n");
