@@ -72,6 +72,7 @@ int main(int argc, char *argv[]) {
 		    strcat(fullCommand,"/");
 		    strcat(fullCommand,command);
                     execv(fullCommand, params);
+		    free(fullCommand);
                 } else {
                     char* path = getenv("PATH");
 		    int pathLength=strlen(path);
