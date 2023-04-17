@@ -15,7 +15,7 @@ void setColor(int color) {
 
 void printPrompt() {
     setColor(32);
-    printf("%s@HOST-NAME", getenv("USER"), getenv("PWD"));
+    printf("%s@HOST-NAME", getenv("USER"));
     setColor(0);
     printf(":");
     setColor(34);
@@ -59,22 +59,50 @@ int main(int argc, char *argv[]) {
 
         printf("Command %s\n", command);
 
-        if (!(command[0] == '/'
-            || (command[0] == '.' && command[1] == '/')
-            || (command[0] == '.' && command[1] == '.' && command[2] == '/'))) {
-
-              // /bin:/usr/bin:/usr/local/bin
-
-        }
 
         int child = fork();
 
         if (child != -1) {
             if (child == 0) {
-
-
-                execv(command, params);
-                printf("Error File not found: %s\n", command);
+                if (command[0] == '/'
+                    || (command[0] == '.' && command[1] == '/')
+                    || (command[0] == '.' && command[1] == '.' && command[2] == '/')) {
+                    execv(command, params);
+                } else {
+                    char* path = getenv("PATH");
+		    // Länge der PATH-Variable ermitteln
+		    char c = 'a';
+		    int countPath = -1;
+		    while(c != '\0') {
+			    c = path[countPath];
+			    countPath++;
+		    }
+		    // Länge des Kommandos ermitteln
+		    c = 'a';
+		    int countCommand = -1;
+		    while(c != '\0') {
+			    c = command[countCommand];
+			    countCommand++;
+		    }
+		    char * splitPath = (char *) malloc((countPath+countCommand) * sizeof(char));
+		    char * splitPathCopy = (char *) malloc((countPath+countCommand) * sizeof(char));
+		    splitPath = strtok(path, ":");
+		    strcpy(splitPathCopy,splitPath);
+		    strcat(splitPathCopy,"/");
+		    strcat(splitPathCopy,command);
+                    execv(splitPathCopy, params);
+		    while(1) {
+			splitPath = strtok(NULL, ":");
+			if(splitPath==NULL) {
+				break;
+			}
+		    	strcpy(splitPathCopy,splitPath);
+		    	strcat(splitPathCopy,"/");
+		    	strcat(splitPathCopy,command);
+                    	execv(splitPathCopy, params);
+		    }
+		}
+                printf("Error executable not found: %s\n", command);
                 exit(1);
             } else {
                 int status;
