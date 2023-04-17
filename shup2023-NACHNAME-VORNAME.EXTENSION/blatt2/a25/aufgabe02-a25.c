@@ -52,40 +52,31 @@ int main(int argc, char *argv[]) {
 
         for (int i = 1; i < spaces + 1; ++i) {
             params[i] = strtok(NULL, " ");
-            printf("%s\n", params[i]);
         }
         params[spaces + 1] = NULL;
         char *command = params[0];
-
-        printf("Command %s\n", command);
-
 
         int child = fork();
 
         if (child != -1) {
             if (child == 0) {
-                if (command[0] == '/'
-                    || (command[0] == '.' && command[1] == '/')
-                    || (command[0] == '.' && command[1] == '.' && command[2] == '/')) {
+		int commandLength=strlen(command);
+                if (command[0] == '/') {
                     execv(command, params);
+		} else if ((command[0] == '.' && command[1] == '/')
+                    || (command[0] == '.' && command[1] == '.' && command[2] == '/')) {
+		    char* pwd = getenv("PWD");
+		    int pwdLength=strlen(pwd);
+		    char* fullCommand = (char *) malloc((pwdLength+commandLength+1) * sizeof(char));
+		    strcpy(fullCommand,pwd);
+		    strcat(fullCommand,"/");
+		    strcat(fullCommand,command);
+                    execv(fullCommand, params);
                 } else {
                     char* path = getenv("PATH");
-		    // Länge der PATH-Variable ermitteln
-		    char c = 'a';
-		    int countPath = -1;
-		    while(c != '\0') {
-			    c = path[countPath];
-			    countPath++;
-		    }
-		    // Länge des Kommandos ermitteln
-		    c = 'a';
-		    int countCommand = -1;
-		    while(c != '\0') {
-			    c = command[countCommand];
-			    countCommand++;
-		    }
-		    char * splitPath = (char *) malloc((countPath+countCommand) * sizeof(char));
-		    char * splitPathCopy = (char *) malloc((countPath+countCommand) * sizeof(char));
+		    int pathLength=strlen(path);
+		    char * splitPath = (char *) malloc((pathLength) * sizeof(char));
+		    char * splitPathCopy = (char *) malloc((pathLength+commandLength+1) * sizeof(char));
 		    splitPath = strtok(path, ":");
 		    strcpy(splitPathCopy,splitPath);
 		    strcat(splitPathCopy,"/");
@@ -101,6 +92,8 @@ int main(int argc, char *argv[]) {
 		    	strcat(splitPathCopy,command);
                     	execv(splitPathCopy, params);
 		    }
+		    free(splitPath);
+		    free(splitPathCopy);
 		}
                 printf("Error executable not found: %s\n", command);
                 exit(1);
