@@ -15,11 +15,13 @@ void setColor(int color) {
 
 void printPrompt() {
     setColor(32);
-    printf("%s@HOST-NAME", getenv("USER"));
+    char hostname[1024];
+    gethostname(hostname, 1024);
+    printf("%s@%s", getenv("USER"),hostname);
     setColor(0);
     printf(":");
     setColor(34);
-    printf("%s ", getenv("PWD"));
+    printf("%s", getenv("PWD"));
     setColor(0);
     printf("$ ");
 }
