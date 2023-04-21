@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
+#include <sys/wait.h>
 #include <time.h>
 
 int main(int argc, char *argv[]) {
@@ -63,6 +64,10 @@ int main(int argc, char *argv[]) {
             printf("Vaterprozess: %d\n", *shared_mem);
         }
         shmdt(shared_mem);
+
+	// Wait for child-process (so that the shared memory doesn't get removed before it is executed)
+	int status;
+	wait(&status);
 
         // Shared Memory-Bereich freigeben
         shmctl(shm_id, IPC_RMID, NULL);
