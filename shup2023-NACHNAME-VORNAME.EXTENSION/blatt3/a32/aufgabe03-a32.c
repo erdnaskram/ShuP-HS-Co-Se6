@@ -39,15 +39,20 @@ int main(int argc, char *argv[]) {
     } else if (pid == 0) {
         // Kindprozess liest Zufallszahlen aus Shared Memory
         printf("KINDPROZESS\n");
-        int *shared_mem = shmat(shm_id, NULL, 0);
+        fflush(0);
+        int *shared_mem = (int*) shmat(shm_id, NULL, 0);
+        int test = *shared_mem;
         printf("%d\n", n);
+        fflush(0);
         for (int i = 0; i < n; i++) {
 
             //Problemzeile
-            printf("Kindprozess: %d\n", *shared_mem);
+            printf("Kindprozess: %d\n", test);
+            fflush(0);
 
 
             printf("%d\n", i);
+            fflush(0);
         }
         shmdt(shared_mem);
     } else {
