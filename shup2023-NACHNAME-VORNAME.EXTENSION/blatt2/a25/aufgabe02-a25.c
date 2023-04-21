@@ -17,7 +17,7 @@ void printPrompt() {
     setColor(32);
     char hostname[1024];
     gethostname(hostname, 1024);
-    printf("%s@%s", getenv("USER"),hostname);
+    printf("%s@%s", getenv("USER"), hostname);
     setColor(0);
     printf(":");
     setColor(34);
@@ -62,42 +62,43 @@ int main(int argc, char *argv[]) {
 
         if (child != -1) {
             if (child == 0) {
-		int commandLength=strlen(command);
+                int commandLength = (int) strlen(command);
                 if (command[0] == '/') {
                     execv(command, params);
-		} else if ((command[0] == '.' && command[1] == '/')
-                    || (command[0] == '.' && command[1] == '.' && command[2] == '/')) {
-		    char* pwd = getenv("PWD");
-		    int pwdLength=strlen(pwd);
-		    char* fullCommand = (char *) malloc((pwdLength+commandLength+1) * sizeof(char));
-		    strcpy(fullCommand,pwd);
-		    strcat(fullCommand,"/");
-		    strcat(fullCommand,command);
+                } else if ((command[0] == '.' && command[1] == '/')
+                           || (command[0] == '.' && command[1] == '.' && command[2] == '/')) {
+                    char *pwd = getenv("PWD");
+                    int pwdLength = (int) strlen(pwd);
+                    char *fullCommand = (char *) malloc((pwdLength + commandLength + 1) * sizeof(char));
+                    strcpy(fullCommand, pwd);
+                    strcat(fullCommand, "/");
+                    strcat(fullCommand, command);
                     execv(fullCommand, params);
-		    free(fullCommand);
+                    free(fullCommand);
                 } else {
-                    char* path = getenv("PATH");
-		    int pathLength=strlen(path);
-		    char * splitPath = (char *) malloc((pathLength) * sizeof(char));
-		    char * splitPathCopy = (char *) malloc((pathLength+commandLength+1) * sizeof(char));
-		    splitPath = strtok(path, ":");
-		    strcpy(splitPathCopy,splitPath);
-		    strcat(splitPathCopy,"/");
-		    strcat(splitPathCopy,command);
+                    char *path = getenv("PATH");
+                    int pathLength = (int) strlen(path);
+                    char *splitPath;
+                    char *splitPathCopy = (char *) malloc((pathLength + commandLength + 1) * sizeof(char));
+                    char *pathCopy = (char *) malloc((pathLength + 1) * sizeof(char));
+                    strcpy(pathCopy, path);
+                    splitPath = strtok(pathCopy, ":");
+                    strcpy(splitPathCopy, splitPath);
+                    strcat(splitPathCopy, "/");
+                    strcat(splitPathCopy, command);
                     execv(splitPathCopy, params);
-		    while(1) {
-			splitPath = strtok(NULL, ":");
-			if(splitPath==NULL) {
-				break;
-			}
-		    	strcpy(splitPathCopy,splitPath);
-		    	strcat(splitPathCopy,"/");
-		    	strcat(splitPathCopy,command);
-                    	execv(splitPathCopy, params);
-		    }
-		    free(splitPath);
-		    free(splitPathCopy);
-		}
+                    while (1) {
+                        splitPath = strtok(NULL, ":");
+                        if (splitPath == NULL) {
+                            break;
+                        }
+                        strcpy(splitPathCopy, splitPath);
+                        strcat(splitPathCopy, "/");
+                        strcat(splitPathCopy, command);
+                        execv(splitPathCopy, params);
+                    }
+                    free(splitPathCopy);
+                }
                 printf("Error executable not found: %s\n", command);
                 exit(1);
             } else {
