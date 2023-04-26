@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
     // Shared Memory-Bereich erzeugen
     int shm_id = shmget(IPC_PRIVATE, sizeof(int), 0777 | IPC_CREAT);
     if (shm_id < 0) {
-        printf("Fehler beim Erzeugen des Shared Memory-Bereichs\n");
+        printf("Fehler beim Erzeugen des Shared Memory-Bereichs\n"); //Oder perror?
         return 1;
     }
     printf("Shared Memory ID: %d\n", shm_id);
@@ -33,26 +33,26 @@ int main(int argc, char *argv[]) {
 
     // Kindprozess erzeugen
     int pid = fork();
-    printf("PID: %d\n", pid);
+    printf("PID: %d\n", pid); //TODO: Vater-PID
     if (pid == -1) {
         printf("Fehler beim Erzeugen des Kindprozesses\n");
         return 1;
     } else if (pid == 0) {
         // Kindprozess liest Zufallszahlen aus Shared Memory
         printf("KINDPROZESS\n");
-        fflush(0);
+        fflush(0); //Warum?
         int *shared_mem = (int*) shmat(shm_id, NULL, 0);
-        int test = *shared_mem;
-        printf("%d\n", n);
-        fflush(0);
+        int test = *shared_mem; //Warum?
+        printf("%d\n", n);// Warum?
+        fflush(0); //Warum?
         for (int i = 0; i < n; i++) {
 
-            //Problemzeile
+            //Problemzeile --> ???
             printf("Kindprozess: %d\n", test);
-            fflush(0);
+            fflush(0); //Warum?
 
 
-            printf("%d\n", i);
+            printf("%d\n", i); //Warum?
             fflush(0);
         }
         shmdt(shared_mem);

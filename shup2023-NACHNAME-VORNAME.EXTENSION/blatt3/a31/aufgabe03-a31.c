@@ -10,7 +10,7 @@
 
 
 void wait_sem(int semid, int semnum) {
-    struct sembuf op;
+    struct sembuf op; //TODO: rename to sops
     op.sem_num = semnum;
     op.sem_op = -1;
     op.sem_flg = 0;
@@ -21,7 +21,7 @@ void wait_sem(int semid, int semnum) {
 }
 
 void signal_sem(int semid, int semnum) {
-    struct sembuf op;
+    struct sembuf op; //TODO: rename to sops
     op.sem_num = semnum;
     op.sem_op = 1;
     op.sem_flg = 0;
@@ -32,9 +32,9 @@ void signal_sem(int semid, int semnum) {
 }
 
 int main() {
-    int semid = semget(IPC_PRIVATE, 2, 0777 | IPC_CREAT);
+    int semid = semget(IPC_PRIVATE, 2, 0777 | IPC_CREAT); //Wieso 2?
     if (semid == -1) {
-        perror("semget failed");
+        perror("semget failed"); //TODO: Ausgabe von errno
         exit(1);
     }
 
@@ -68,7 +68,7 @@ int main() {
         wait_sem(semid, 1); // Wait for child signal
         printf("Parent process received signal from child\n");
         printf("Parent process exiting\n");
-        semctl(semid, 0, IPC_RMID, 0); // Remove semaphores
+        semctl(semid, 0, IPC_RMID, 0); // Remove semaphores --> löscht nur eine
     }
     return 0;
 }
