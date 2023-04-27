@@ -33,27 +33,14 @@ int main(int argc, char *argv[]) {
 
     // Kindprozess erzeugen
     int pid = fork();
-    printf("PID: %d\n", pid); //TODO: Vater-PID
     if (pid == -1) {
         printf("Fehler beim Erzeugen des Kindprozesses\n");
         return 1;
     } else if (pid == 0) {
         // Kindprozess liest Zufallszahlen aus Shared Memory
-        printf("KINDPROZESS\n");
-        fflush(0); //Warum?
         int *shared_mem = (int*) shmat(shm_id, NULL, 0);
-        int test = *shared_mem; //Warum?
-        printf("%d\n", n);// Warum?
-        fflush(0); //Warum?
         for (int i = 0; i < n; i++) {
-
-            //Problemzeile --> ???
-            printf("Kindprozess: %d\n", test);
-            fflush(0); //Warum?
-
-
-            printf("%d\n", i); //Warum?
-            fflush(0);
+            printf("Kindprozess: %d\n", *shared_mem);
         }
         shmdt(shared_mem);
     } else {
