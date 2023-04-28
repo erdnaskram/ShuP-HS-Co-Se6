@@ -11,10 +11,33 @@
 #include <sys/shm.h>
 #include <sys/wait.h>
 #include <time.h>
+#include <sys/sem.h>
 
 void sigtermhandler(int);
 
 int run = 1;
+
+void wait_sem(int semid, int semnum) {
+    struct sembuf sops;
+    sops.sem_num = semnum;
+    sops.sem_op = -1;
+    sops.sem_flg = 0;
+    if (semop(semid, &sops, 1) == -1) {
+        perror("semop failed");
+        exit(1);
+    }
+}
+
+void signal_sem(int semid, int semnum) {
+    struct sembuf sops;
+    sops.sem_num = semnum;
+    sops.sem_op = 1;
+    sops.sem_flg = 0;
+    if (semop(semid, &sops, 1) == -1) {
+        perror("semop failed");
+        exit(1);
+    }
+}
 
 
 int main() {
@@ -33,6 +56,18 @@ int main() {
     int *shared_mem = (int *) shmat(shm_id, NULL, 0);
     shared_mem[5] = 0; // Next to Write
     shared_mem[6] = 0; // Next to Read
+    shmdt(shared_mem);
+
+
+    //SEMAPHOREN
+    int semid = semget(IPC_PRIVATE, 2, 0777 | IPC_CREAT);
+    if (semid == -1) {
+        perror("semget failed"); //TODO: Ausgabe von errno
+        exit(1);
+    }
+
+    semctl(semid, 0, SETALL, 0);
+
 
     int spooler = fork();
 
@@ -46,15 +81,16 @@ int main() {
 
 
         //TODO sauberes Beenden oder so :)
-        while(1){
+        while (1) {
             int *nextToRead = &shared_mem[6];
             int sharedMemChildID = shared_mem[*nextToRead];
             //TODO: SYNCHRONISIEREN + an Drucker senden
 
 
+
             //im Ringspeicher eins weiter zählen
             (*nextToRead)++;
-            if(*nextToRead == 5){
+            if (*nextToRead == 5) {
                 *nextToRead = 0;
             }
 
@@ -138,6 +174,7 @@ int main() {
 
 
 }
-void sigtermhandler(int signb){
+
+void sigtermhandler(int signb) {
     run = 0;
 }
