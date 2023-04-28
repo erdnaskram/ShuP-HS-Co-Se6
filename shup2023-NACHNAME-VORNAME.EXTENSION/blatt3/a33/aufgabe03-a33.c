@@ -46,7 +46,7 @@ int main() {
     signal(SIGINT, sigtermhandler);
 
     // 	Shared Memory-Bereich erzeugen
-    // 	5 int-Werte = jewiels SharedMemoryID für 1 Child
+    // 	5 int-Werte (jewiels SharedMemoryID für 1 Child) + 2 int-Werte (next to read + next to write) = 7 int-Werte
     int shm_id = shmget(IPC_PRIVATE, 7 * sizeof(int), 0777 | IPC_CREAT);
     if (shm_id < 0) {
         printf("Fehler beim Erzeugen des Shared Memory-Bereichs\n");
@@ -60,13 +60,13 @@ int main() {
 
 
     //SEMAPHOREN
-    int semid = semget(IPC_PRIVATE, 2, 0777 | IPC_CREAT);
+    int semid = semget(IPC_PRIVATE, 3, 0777 | IPC_CREAT);
     if (semid == -1) {
         perror("semget failed"); //TODO: Ausgabe von errno
         exit(1);
     }
 
-    semctl(semid, 0, SETALL, 0);
+    semctl(semid, 0, SETALL, 0); //TODO: Hier haben wir aufgehört!
 
 
     int spooler = fork();
@@ -80,8 +80,8 @@ int main() {
         int *shared_mem = (int *) shmat(shm_id, NULL, 0);
 
 
-        //TODO sauberes Beenden oder so :)
-        while (1) {
+        while (run) { // Laut Wißmann kein "sauberes" beenden notwendig, 
+		      // Hinweis, dass noch Geschriebenes nicht mehr gedruckt wird, reicht.
             int *nextToRead = &shared_mem[6];
             int sharedMemChildID = shared_mem[*nextToRead];
             //TODO: SYNCHRONISIEREN + an Drucker senden
@@ -95,6 +95,9 @@ int main() {
             }
 
         }
+
+	//TODO: Hinweis, dass Geschriebenes nicht mehr gedruckt wird!
+	//TODO: Dafür sorgen, dass Children sich beenden, obwohl sie ggf. in Semaphoren-Waits hängen.
 
         //detach shared memory
         shmdt(shared_mem);
@@ -148,7 +151,7 @@ int main() {
                 shared_child_mem[i] = rand();// Schreiben des Druckinhalts in den Speicherplatz
             }
 
-            *shared_mem = shm_child_id;//TODO: SYNCHRONISIEREN
+            *shared_mem = shm_child_id;//TODO: SYNCHRONISIEREN + next to write bedenken!
 
             //detach shared memory
             shmdt(shared_mem);
