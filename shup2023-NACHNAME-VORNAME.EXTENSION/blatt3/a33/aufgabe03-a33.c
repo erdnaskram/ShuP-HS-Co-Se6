@@ -39,7 +39,6 @@ void signal_sem(int semid, int semnum) {
     }
 }
 
-
 int main() {
 	printf("Parent-Prozess-ID: %d\n", getpid());
 
@@ -50,7 +49,14 @@ int main() {
     // 	5 int-Werte (jeweils SharedMemoryID für 1 Child) + 2 int-Werte (next to read + next to write) = 7 int-Werte
     int shm_id = shmget(IPC_PRIVATE, 7 * sizeof(int), 0777 | IPC_CREAT);
     if (shm_id < 0) {
-        printf("Fehler beim Erzeugen des Shared Memory-Bereichs\n");
+        printf("Fehler beim Erzeugen des Shared Memory-Bereichs für Warteschlange + Counter\n");
+        return 1;
+    }
+
+	//Kommunikation Spooler -> Drucker
+    int shm_drucker_id = shmget(IPC_PRIVATE, 2 * sizeof(int), 0777 | IPC_CREAT);
+    if (shm_drucker_id < 0) {
+        printf("Fehler beim Erzeugen des Shared Memory-Bereichs für Drucker\n");
         return 1;
     }
 
@@ -60,19 +66,36 @@ int main() {
     shmdt(shared_mem);
 
 
-    //SEMAPHOREN
+    //Semaphoren Anwendungen <-> Druckerspooler
     int semid = semget(IPC_PRIVATE, 3, 0777 | IPC_CREAT);
     if (semid == -1) {
-        perror("semget failed"); //TODO: Ausgabe von errno
+        perror("Fehler in semget von Anwendungen und Druckerspooler"); //TODO: Ausgabe von errno
         exit(1);
     }
 
 	//0. Sem = mutex
     semctl(semid, 0, SETVAL, 1);
-	//1. Sem = erzeuger
+	//1. Sem = erzeuger, Warteschlange leer
 	semctl(semid, 1, SETVAL, 5);
-	//2. Sem = verbraucher
+	//2. Sem = verbraucher, Warteschlange voll
 	semctl(semid, 2, SETVAL, 0);
+
+
+    //Semaphoren Druckerspooler <-> Drucker
+    int semid2 = semget(IPC_PRIVATE, 4, 0777 | IPC_CREAT);
+    if (semid2 == -1) {
+        perror("Fehler in semget von Druckerspooler und Druckern"); //TODO: Ausgabe von errno
+        exit(1);
+    }
+
+	//0. Sem = drucker1, Warteschlange leer
+    semctl(semid2, 0, SETVAL, 1);
+	//1. Sem = drucker2, Warteschlange leer
+	semctl(semid2, 1, SETVAL, 1);
+	//2. Sem = drucker1, Warteschlange voll
+    semctl(semid2, 2, SETVAL, 0);
+	//3. Sem = drucker2, Warteschlange voll
+	semctl(semid2, 3, SETVAL, 0);
 
     int spooler = fork();
 
@@ -83,6 +106,8 @@ int main() {
         printf("Spoooooooler\n");
 
         int *shared_mem = (int *) shmat(shm_id, NULL, 0);
+        int *shared_drucker_mem = (int *) shmat(shm_drucker_id, NULL, 0);
+		int druckerTurn = 0;
 
         while (run) { // Laut Wißmann kein "sauberes" beenden notwendig,
 		      // Hinweis, dass noch Geschriebenes nicht mehr gedruckt wird, reicht.
@@ -92,10 +117,15 @@ int main() {
             int sharedMemChildID = shared_mem[*nextToRead];
 			signal_sem(semid, 1); //einen Platz in Druckerwarteschlange frei geben
 
+			wait_sem(semid2, druckerTurn); //auf druckenden Drucker warten
+			shared_drucker_mem[druckerTurn] = sharedMemChildID;
+			signal_sem(semid2, druckerTurn+2); //Druckplatz belegen
 
-			printf("Spooler: Shared Memory of child ID: %d\n", sharedMemChildID);
-
-            //TODO: an Drucker senden
+			//Druckaufträge abwechselnd and Drucker verteilen
+			druckerTurn++;
+			if(druckerTurn == 2){
+				druckerTurn = 0;
+			}
 
             //im Ringspeicher eins weiter zählen
             (*nextToRead)++;
@@ -104,11 +134,12 @@ int main() {
             }
         }
 
-	//TODO: Hinweis, dass Geschriebenes nicht mehr gedruckt wird!
-	//TODO: Dafür sorgen, dass Children sich beenden, obwohl sie ggf. in Semaphoren-Waits hängen.
+		printf("Beachten Sie, dass Druckaufträge möglicherweise nicht ausgeführt werden konnten, da das Programm beendet wurde!\n");
+		//TODO: Dafür sorgen, dass Children sich beenden, obwohl sie ggf. in Semaphoren-Waits hängen.
 
         //detach shared memory
         shmdt(shared_mem);
+		shmdt(shared_drucker_mem);
 
         return 0;
     }
@@ -120,6 +151,35 @@ int main() {
         return 1;
     } else if (drucker1 == 0) {
         printf("Drucker1\n");
+		//drucker_handler(0);
+
+		int druckerNR = 0;
+        int *shared_drucker_mem = (int *) shmat(shm_drucker_id, NULL, 0);
+
+		while(run){
+			wait_sem(semid2, druckerNR+2); //auf Druckauftrag warten
+
+			int toPrintID = shared_drucker_mem[druckerNR];
+       		int *shared_child_mem = (int *) shmat(toPrintID, NULL, 0);
+
+			for(int i = 1; i <= shared_child_mem[0]; i++){
+				printf("\033[0;32mDrucker %i druckt Druckauftrag mit ID %i: Seite %i mit Inhalt %i\033[0;0m\n", druckerNR+1, toPrintID, i, shared_child_mem[i]);
+				sleep(1);
+				printf("\033[0;32mDrucker %i hat Druckauftrag mit ID %i gedruckt: Seite %i\033[0;0m\n", druckerNR+1, toPrintID, i);
+			}
+
+			//Shared Memory ausblenden
+			shmdt(shared_child_mem);
+			//Shared Memory freigeben
+			shmctl(toPrintID, IPC_RMID, NULL);
+
+			signal_sem(semid2, druckerNR); //Druckplatz freigeben
+		}
+
+		//Shared Memory ausblenden
+		shmdt(shared_drucker_mem);
+
+
         return 0;
     }
 
@@ -131,6 +191,35 @@ int main() {
         return 1;
     } else if (drucker2 == 0) {
         printf("Drucker2\n");
+		//drucker_handler(1);
+
+		int druckerNR = 1;
+        int *shared_drucker_mem = (int *) shmat(shm_drucker_id, NULL, 0);
+
+		while(run){
+			wait_sem(semid2, druckerNR+2); //auf Druckauftrag warten
+
+			int toPrintID = shared_drucker_mem[druckerNR];
+       		int *shared_child_mem = (int *) shmat(toPrintID, NULL, 0);
+
+			for(int i = 1; i <= shared_child_mem[0]; i++){
+				printf("\033[0;93mDrucker %i druckt Seite %i mit Inhalt %i\033[0;0m\n", druckerNR+1, i, shared_child_mem[i]);
+				sleep(1);
+				printf("\033[0;93mDrucker %i fertig mit Druck von Seite %i\033[0;0m\n", druckerNR+1, i);
+			}
+
+			//Shared Memory ausblenden
+			shmdt(shared_child_mem);
+			//Shared Memory freigeben
+			shmctl(toPrintID, IPC_RMID, NULL);
+
+			signal_sem(semid2, druckerNR); //Druckplatz freigeben
+		}
+
+		//Shared Memory ausblenden
+		shmdt(shared_drucker_mem);
+
+
         return 0;
     }
 
@@ -156,6 +245,7 @@ int main() {
             shared_child_mem[0] = pages; // Schreiben der Anzahl der Seiten in den ersten Speicherplatz
             for (int i = 1; i <= pages; i++) {
                 shared_child_mem[i] = rand();// Schreiben des Druckinhalts in den Speicherplatz
+				printf("Anwendung erzeugt Druckauftrag mit ID %i Seite %i mit Inhalt %i\n", shm_child_id, i, shared_child_mem[i]);
             }
 
 			wait_sem(semid, 1); //einen Platz in Druckerwarteschlange belegen
@@ -169,8 +259,6 @@ int main() {
             if (*nextToWrite == 5) {
                 *nextToWrite = 0;
             }
-
-			printf("Child: Shared Memory of Child ID: %d\n", shm_child_id);
 
 			signal_sem(semid, 0); //Schreibzugriff abgeben
 			signal_sem(semid, 2); //Spooler über Druckauftrag informieren
@@ -194,6 +282,7 @@ int main() {
 
     // Shared Memory-Bereich freigen
     shmctl(shm_id, IPC_RMID, NULL);
+	shmctl(shm_drucker_id, IPC_RMID, NULL);
 
     return 0;
 
