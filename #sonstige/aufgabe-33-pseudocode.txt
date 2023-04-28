@@ -1,0 +1,65 @@
+// Initialisiere Semaphoren
+//Semaphoren Anwendungen <-> Druckerspooler
+Semaphore mutex = 1; 		 //Semaphoren-Array[0]; Schreibzugriff auf "nextToWrite" aus Ringspeicher
+Semaphore warteschlangeLeer = 5; //Semaphoren-Array[1]
+Semaphore warteschlangeVoll = 0; //Semaphoren-Array[2]
+
+//Semaphoren Druckerspooler <-> Drucker
+Semaphore DruckerWarteschlangeLeer[0] = 1;	//Sem-Array[0]
+Semaphore DruckerWarteschlangeLeer[1] = 1;	//Sem-Array[0]
+Semaphore DruckerWarteschlangeVoll[0] = 0;	//Sem-Array[0]
+Semaphore DruckerWarteschlangeVoll[1] = 0;	//Sem-Array[0]
+
+
+
+//Integer druckerTurn = 0;
+
+
+void Spooler(void) {
+	wait(warteschlangeVoll);
+	auftrag = leseNächstenAuftragAusSharedMemory_h();
+	signal(warteschlangeLeer);
+
+
+	druckerTurn = (druckerTurn+1) % 2;
+
+	wait(DruckerWarteschlangeLeer[druckerTurn])
+	schreibeAufragAbwechselndAnDrucker_h(druckerTurn);
+	signal(DruckerWarteschlangeVoll[druckerTurn]);
+	
+
+
+}
+
+void Anwendung(void) {
+	while(true) {
+		wait(warteschlangeLeer);
+		wait(mutex);
+		schreibeAuftragInNächstenFreienSpeicher_h();
+		signal(mutex);
+		signal(warteschlangeVoll);
+	}
+
+}
+
+void DruckerHandler(Integer druckerTurn) {
+	while(true) {
+		wait(DruckerWarteschlangeVoll[druckerTurn])
+		schreibeAufragAbwechselndAnDrucker_h();
+		signal(DruckerWarteschlangeLeer[druckerTurn]);		
+
+	}
+
+}
+
+void Drucker1(void) {
+	DruckerHandler(1);
+
+
+}
+
+
+void Drucker2(void) {
+	DruckerHandler(2);
+
+}
