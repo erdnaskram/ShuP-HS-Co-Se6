@@ -1,5 +1,5 @@
 //
-// Created by PRAKTIKANT on 21.04.2023.
+// Created by STUDIS on 21.04.2023.
 //
 #include <stdio.h>
 #include <stdlib.h>
