@@ -1,0 +1,141 @@
+Version mit Mutex:
+
+// Shared Memory
+int* queue;   // Warteschlange der Druckaufträge
+int* front;   // Zeiger auf das vorderste Element in der Warteschlange
+int* rear;    // Zeiger auf das hintere Element in der Warteschlange
+int* count;   // Anzahl der Elemente in der Warteschlange
+
+// Semaphoren
+Semaphore* mutex;   // Schutz der kritischen Region
+Semaphore* empty;   // Anzahl der freien Plätze in der Warteschlange
+Semaphore* full;    // Anzahl der belegten Plätze in der Warteschlange
+Semaphore* printer; // Kontrolle des Zugriffs auf die Drucker
+
+// Initialisierung
+mutex = Semaphore(1);
+empty = Semaphore(5);
+full = Semaphore(0);
+printer = Semaphore(2); // zwei Drucker vorhanden
+
+front = shared_memory_allocate(sizeof(int));
+rear = shared_memory_allocate(sizeof(int));
+count = shared_memory_allocate(sizeof(int));
+queue = shared_memory_allocate(5 * sizeof(int));
+
+*front = 0;
+*rear = 0;
+*count = 0;
+
+// Anwendung, die einen Druckauftrag erteilt
+int main() {
+  // Druckauftrag erstellen
+
+  empty.wait(); // Wartet auf freien Platz in der Warteschlange
+
+  mutex.wait(); // Schutz der kritischen Region
+  queue[*rear] = druckauftrag;
+  *rear = (*rear + 1) % 5;
+  *count += 1;
+  mutex.signal();
+
+  full.signal(); // Signalisiert einen neuen Druckauftrag
+
+  // Auf Antwort vom Druckerspooler warten
+
+  return 0;
+}
+
+// Druckerspooler
+int main() {
+  while (true) {
+    full.wait(); // Wartet auf einen neuen Druckauftrag
+
+    mutex.wait(); // Schutz der kritischen Region
+    int druckauftrag = queue[*front];
+    *front = (*front + 1) % 5;
+    *count -= 1;
+    mutex.signal();
+
+    printer.wait(); // Wartet auf Zugriff auf einen Drucker
+
+    // Druckauftrag an einen freien Drucker senden
+    // ...
+
+    printer.signal(); // Freigabe des Druckers
+
+    empty.signal(); // Freigabe eines Platzes in der Warteschlange
+  }
+
+  return 0;
+}
+
+// Drucker
+int main() {
+  while (true) {
+    // Auf neuen Druckauftrag warten
+
+    printer.wait(); // Wartet auf Zugriff auf den Drucker
+
+    // Druckauftrag ausführen
+    // ...
+
+    printer.signal(); // Freigabe des Druckers
+  }
+
+  return 0;
+}
+
+
+
+Version ohne Mutex (unvollständig):
+
+/ Definition von Semaphoren und Shared Memory
+// sharedMemoryQueue ist eine Array von fester Größe, um die Druckaufträge zu speichern
+// printQueueFull und printQueueEmpty sind Semaphore, um die volle und leere Zustände der Warteschlange zu überwachen
+// printJobMutex ist ein Semaphore, um den Zugriff auf die Warteschlange zu synchronisieren
+// printer1Available und printer2Available sind Semaphore, um zu überwachen, ob ein Drucker verfügbar ist
+
+// Initialisierung der Semaphore und Shared Memory
+printQueueFull = createSemaphore(0)
+printQueueEmpty = createSemaphore(5)
+printJobMutex = createSemaphore(1)
+printer1Available = createSemaphore(1)
+printer2Available = createSemaphore(1)
+
+// Drucker 1 Prozess
+process Printer1:
+    while True:
+        printer1Available.wait(1) // Warten, bis der Drucker verfügbar ist
+        printJobMutex.wait(1) // Warten, bis der Zugriff auf die Warteschlange möglich ist
+        if sharedMemoryQueue is not empty: // Überprüfen, ob es Druckaufträge gibt
+            printJob = sharedMemoryQueue.dequeue() // Druckauftrag aus der Warteschlange entnehmen
+            printQueueFull.signal(1) // Freigeben des vollen Platzes in der Warteschlange
+            printJobMutex.signal(1) // Freigeben des Zugriffs auf die Warteschlange
+            print(printJob) // Drucken des Druckauftrags
+        else:
+            printJobMutex.signal(1) // Freigeben des Zugriffs auf die Warteschlange
+        printer1Available.signal(1) // Freigeben des Druckers
+
+// Drucker 2 Prozess
+process Printer2:
+    while True:
+        printer2Available.wait(1) // Warten, bis der Drucker verfügbar ist
+        printJobMutex.wait(1) // Warten, bis der Zugriff auf die Warteschlange möglich ist
+        if sharedMemoryQueue is not empty: // Überprüfen, ob es Druckaufträge gibt
+            printJob = sharedMemoryQueue.dequeue() // Druckauftrag aus der Warteschlange entnehmen
+            printQueueFull.signal(1) // Freigeben des vollen Platzes in der Warteschlange
+            printJobMutex.signal(1) // Freigeben des Zugriffs auf die Warteschlange
+            print(printJob) // Drucken des Druckauftrags
+        else:
+            printJobMutex.signal(1) // Freigeben des Zugriffs auf die Warteschlange
+        printer2Available.signal(1) // Freigeben des Druckers
+
+// Druckerspooler Prozess
+process PrintScheduler:
+    while True:
+        printQueueEmpty.wait(1) // Warten, bis ein Platz in der Warteschlange frei ist
+        printJobMutex.wait(1) // Warten, bis der Zugriff auf die Warteschlange möglich ist
+        if sharedMemoryQueue is not full: // Überprüfen, ob die Warteschlange voll ist
+            sharedMemoryQueue.enqueue(printJob) // Druckauftrag in die Warteschlange einfügen
+            printQueueEmpty.signal(1) // Fre

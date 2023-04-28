@@ -1,0 +1,59 @@
+// Initialisiere Semaphore und Shared Memory
+Semaphore queueFull = 0; // Semaphore, die angibt, ob die Warteschlange voll ist
+Semaphore queueEmpty = 5; // Semaphore, die angibt, ob die Warteschlange leer ist
+Semaphore printer1Free = 1; // Semaphore, die angibt, ob Drucker 1 verfügbar ist
+Semaphore printer2Free = 1; // Semaphore, die angibt, ob Drucker 2 verfügbar ist
+Shared Memory queue[5]; // Shared Memory, der die Druckaufträge in der Warteschlange speichert
+int queueHead = 0; // Variable, die angibt, wo der nächste Druckauftrag in der Warteschlange platziert werden soll
+int queueTail = 0; // Variable, die angibt, wo der nächste Druckauftrag aus der Warteschlange entfernt werden soll
+
+// Funktion, die von jeder Anwendung aufgerufen wird, um einen Druckauftrag zu erstellen
+void createPrintJob(int printJob) {
+    wait(queueEmpty); // Warte, bis es Platz in der Warteschlange gibt
+    wait(printer1Free); // Warte, bis Drucker 1 verfügbar ist
+    wait(printer2Free); // Warte, bis Drucker 2 verfügbar ist
+    
+    // Speichere Druckauftrag in Warteschlange
+    queue[queueHead] = printJob;
+    queueHead = (queueHead + 1) % 5;
+    
+    signal(queueFull); // Signalisiere, dass die Warteschlange nicht mehr leer ist
+}
+
+// Funktion, die vom Druckerspooler aufgerufen wird, um einen Druckauftrag aus der Warteschlange zu holen
+int getNextPrintJob() {
+    wait(queueFull); // Warte, bis es Druckaufträge in der Warteschlange gibt
+    
+    // Hole nächsten Druckauftrag aus Warteschlange
+    int printJob = queue[queueTail];
+    queueTail = (queueTail + 1) % 5;
+    
+    signal(queueEmpty); // Signalisiere, dass es wieder Platz in der Warteschlange gibt
+    
+    return printJob;
+}
+
+// Funktion, die von jedem Drucker aufgerufen wird, um einen Druckauftrag abzuarbeiten
+void print(int printerNumber, int printJob) {
+    // Simuliere Druckvorgang
+    sleep(printJob);
+    
+    if(printerNumber == 1) {
+        signal(printer1Free); // Signalisiere, dass Drucker 1 wieder verfügbar ist
+    } else {
+        signal(printer2Free); // Signalisiere, dass Drucker 2 wieder verfügbar ist
+    }
+}
+
+// Hauptfunktion des Druckerspoolers
+int main() {
+    while(true) {
+        // Hole nächsten Druckauftrag aus der Warteschlange
+        int printJob = getNextPrintJob();
+        
+        // Weise Drucker 1 den nächsten Druckauftrag zu, wenn verfügbar, ansonsten warte
+        if(printer1Free >= 1) {
+            printer1Free--; // Markiere Drucker 1 als nicht verfügbar
+            print(1, printJob); // Drucke mit Drucker 1
+        } else {
+            wait(printer1Free
