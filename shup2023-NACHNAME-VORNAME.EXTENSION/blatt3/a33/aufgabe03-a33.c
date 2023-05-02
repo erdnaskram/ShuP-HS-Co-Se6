@@ -316,6 +316,8 @@ int main() {
 
     }
 
+    	// TODO: Von Child-Prozessen erzeugte SHM-Bereiche beenden, die aufgrund der abgeschossenen Drucker nicht mehr automatisch beendet werden
+
 	//bei feststeckenden Prozessen in waits
 	signal_sem(semid2, 2); //Drucker1 aus wait holen
 	signal_sem(semid2, 3); //Drucker2 aus wait holen
