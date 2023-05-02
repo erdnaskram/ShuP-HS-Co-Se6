@@ -164,8 +164,6 @@ int main() {
         return 0;
     }
 
-    // TODO: Jeder Drucker druckt nur einen Auftrag...
-
     int drucker1 = fork();
 
     if (drucker1 == -1) {
@@ -195,7 +193,6 @@ int main() {
 
 			//Shared Memory ausblenden
 			shmdt(shared_child_mem);
-            shmdt(shared_run_mem);
 
 			//Shared Memory freigeben
 			shmctl(toPrintID, IPC_RMID, NULL);
@@ -204,6 +201,7 @@ int main() {
 		}
 
 		//Shared Memory ausblenden
+            	shmdt(shared_run_mem);
 		shmdt(shared_drucker_mem);
 
 
@@ -244,7 +242,6 @@ int main() {
 
 			//Shared Memory ausblenden
 			shmdt(shared_child_mem);
-            shmdt(shared_run_mem);
 
 			//Shared Memory freigeben
 			shmctl(toPrintID, IPC_RMID, NULL);
@@ -253,6 +250,7 @@ int main() {
 		}
 
 		//Shared Memory ausblenden
+            	shmdt(shared_run_mem);
 		shmdt(shared_drucker_mem);
 
 
