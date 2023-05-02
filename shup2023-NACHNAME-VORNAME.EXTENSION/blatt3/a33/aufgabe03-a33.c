@@ -39,6 +39,16 @@ void signal_sem(int semid, int semnum) {
     }
 }
 
+int get_sem(int semId, int semNum) {
+	union semun  {
+             int val;
+             struct semid_ds *buf;
+             ushort *array;
+         } arg;
+	int val = semctl(semId, semNum, GETVAL, arg);
+	return val>0 ? val : 0;
+}
+
 int main() {
 	printf("Parent-Prozess-ID: %d\n", getpid());
 
@@ -317,6 +327,8 @@ int main() {
     }
 
     	// TODO: Von Child-Prozessen erzeugte SHM-Bereiche beenden, die aufgrund der abgeschossenen Drucker nicht mehr automatisch beendet werden
+	int toEnd = get_sem(semid, 2);
+	printf("ToEndCount: %i\n", toEnd);
 
 	//bei feststeckenden Prozessen in waits
 	signal_sem(semid2, 2); //Drucker1 aus wait holen
