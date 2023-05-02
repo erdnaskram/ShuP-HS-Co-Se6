@@ -151,15 +151,15 @@ int main() {
                 *nextToRead = 0;
             }
 
-			//Shared Memory detachen
-            shmdt(shared_run_mem);
         }
 
 		printf("Beachten Sie, dass Druckaufträge möglicherweise nicht ausgeführt werden konnten, da das Programm beendet wurde!\n");
 
+	//Shared Memory detached
+        shmdt(shared_run_mem);
         //detach shared memory
         shmdt(shared_mem);
-		shmdt(shared_drucker_mem);
+	shmdt(shared_drucker_mem);
 
         return 0;
     }
@@ -280,7 +280,7 @@ int main() {
             shared_child_mem[0] = pages; // Schreiben der Anzahl der Seiten in den ersten Speicherplatz
             for (int i = 1; i <= pages; i++) {
                 shared_child_mem[i] = rand();// Schreiben des Druckinhalts in den Speicherplatz
-				printf("Anwendung erzeugt Druckauftrag mit ID %i Seite %i mit Inhalt %i\n", shm_child_id, i, shared_child_mem[i]);
+		printf("Anwendung erzeugt Druckauftrag mit ID %i Seite %i mit Inhalt %i\n", shm_child_id, i, shared_child_mem[i]);
             }
 
 			wait_sem(semid, 1); //einen Platz in Druckerwarteschlange belegen
@@ -329,12 +329,7 @@ int main() {
 	}
 
 	//Warten auf Beenden der Kind-Prozesse
-    int status;
-    while (1) {
-        wait(&status);
-        if (&status == NULL)
-            break;
-    }
+        while (wait(NULL)!=-1) ;
 
 	//Semaphoren löschen
 	semctl(semid, 0, IPC_RMID, 0);
