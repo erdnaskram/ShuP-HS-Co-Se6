@@ -152,8 +152,10 @@ int main() {
             }
 
         }
-
-		printf("Beachten Sie, dass Druckaufträge möglicherweise nicht ausgeführt werden konnten, da das Programm beendet wurde!\n");
+	
+	//  TODO: Ausgabe fehlt, da wir mit exit(0) komplett abbrechen in den IFs
+	//        => shmdt wird auch nicht mehr aufgerufen...
+	printf("Beachten Sie, dass Druckaufträge möglicherweise nicht ausgeführt werden konnten, da das Programm beendet wurde!\n");
 
 	//Shared Memory detached
         shmdt(shared_run_mem);
@@ -163,6 +165,8 @@ int main() {
 
         return 0;
     }
+
+    // TODO: Jeder Drucker druckt nur einen Auftrag...
 
     int drucker1 = fork();
 
