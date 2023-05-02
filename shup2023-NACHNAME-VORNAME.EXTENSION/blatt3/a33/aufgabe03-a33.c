@@ -125,7 +125,7 @@ int main() {
 
 			//frühzeitig Schleife bei Beenden verlassen
 			if(!*shared_run_mem)
-				exit(0);
+				continue;
 
 			int sharedMemChildID = shared_mem[*nextToRead];
 			signal_sem(semid, 1); //einen Platz in Druckerwarteschlange frei geben
@@ -134,7 +134,7 @@ int main() {
 
 			//frühzeitig Schleife bei Beenden verlassen
 			if(!*shared_run_mem)
-				exit(0);
+				continue;
 
 			shared_drucker_mem[druckerTurn] = sharedMemChildID;
 			signal_sem(semid2, druckerTurn+2); //Druckplatz belegen
@@ -153,8 +153,6 @@ int main() {
 
         }
 	
-	//  TODO: Ausgabe fehlt, da wir mit exit(0) komplett abbrechen in den IFs
-	//        => shmdt wird auch nicht mehr aufgerufen...
 	printf("Beachten Sie, dass Druckaufträge möglicherweise nicht ausgeführt werden konnten, da das Programm beendet wurde!\n");
 
 	//Shared Memory detached
@@ -184,7 +182,7 @@ int main() {
 
 			//frühzeitig Schleife bei Beenden verlassen
 			if(!*shared_run_mem)
-				exit(0);
+				continue;
 
 			int toPrintID = shared_drucker_mem[druckerNR];
        		int *shared_child_mem = (int *) shmat(toPrintID, NULL, 0);
@@ -233,7 +231,7 @@ int main() {
 			printf("D2 1\n");
 			//frühzeitig Schleife bei Beenden verlassen
 			if(!*shared_run_mem)
-				exit(0);
+				continue;
 
 			int toPrintID = shared_drucker_mem[druckerNR];
        		int *shared_child_mem = (int *) shmat(toPrintID, NULL, 0);
