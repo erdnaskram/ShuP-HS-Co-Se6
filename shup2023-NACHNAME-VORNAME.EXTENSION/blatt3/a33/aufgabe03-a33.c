@@ -14,8 +14,8 @@
 #include <sys/sem.h>
 
 void sigterm_handler(int);
-
 int *shared_run_mem;
+
 
 void wait_sem(int semid, int semnum) {
     struct sembuf sops;
@@ -28,6 +28,7 @@ void wait_sem(int semid, int semnum) {
     }
 }
 
+
 void signal_sem(int semid, int semnum) {
     struct sembuf sops;
     sops.sem_num = semnum;
@@ -39,6 +40,7 @@ void signal_sem(int semid, int semnum) {
     }
 }
 
+
 int get_sem(int semId, int semNum) {
     union semun {
         int val;
@@ -48,6 +50,8 @@ int get_sem(int semId, int semNum) {
     int val = semctl(semId, semNum, GETVAL, arg);
     return val > 0 ? val : 0;
 }
+
+
 
 int main() {
     printf("Parent-Prozess-ID: %d\n", getpid());
@@ -220,8 +224,8 @@ int main() {
                 printf("\033[0;32mDrucker %i druckt Druckauftrag mit ID %i: Seite %i mit Inhalt %i\033[0;0m\n",
                        drucker_nr + 1, to_print_id, i, shared_child_mem[i]);
                 sleep(1);
-                printf("\033[0;32mDrucker %i hat Druckauftrag mit ID %i gedruckt: Seite %i\033[0;0m\n", drucker_nr + 1,
-                       to_print_id, i);
+                printf("\033[0;32mDrucker %i hat Druckauftrag mit ID %i gedruckt: Seite %i\033[0;0m\n",
+                       drucker_nr + 1, to_print_id, i);
             }
 
             //Shared Memory ausblenden
@@ -269,8 +273,8 @@ int main() {
                 printf("\033[0;93mDrucker %i druckt Druckauftrag mit ID %i: Seite %i mit Inhalt %i\033[0;0m\n",
                        drucker_nr + 1, to_print_id, i, shared_child_mem[i]);
                 sleep(1);
-                printf("\033[0;93mDrucker %i hat Druckauftrag mit ID %i gedruckt: Seite %i\033[0;0m\n", drucker_nr + 1,
-                       to_print_id, i);
+                printf("\033[0;93mDrucker %i hat Druckauftrag mit ID %i gedruckt: Seite %i\033[0;0m\n",
+                       drucker_nr + 1, to_print_id, i);
             }
 
             //Shared Memory ausblenden
@@ -302,6 +306,7 @@ int main() {
      * Kindprozesse
      * */
     while (*shared_run_mem) {
+        //Anzahl der Kinder mitzählen, um Shared Memory freizugeben
         children_counter++;
         sleep(rand() % 5);
         pid = fork();
@@ -340,19 +345,21 @@ int main() {
                        shared_child_mem[i]);
             }
 
-            int *nextToWrite = &shared_mem[5];
-            shared_mem[*nextToWrite] = shm_child_id;
+            int *next_to_write = &shared_mem[5];
+            shared_mem[*next_to_write] = shm_child_id;
 
-            //im Ringspeicher eins weiter zählen
-            (*nextToWrite)++;
-            if (*nextToWrite == 5) {
-                *nextToWrite = 0;
+            //im Ringspeicher eins weiter zählen, wenn 5 dann wieder auf 0
+            (*next_to_write)++;
+            if (*next_to_write == 5) {
+                *next_to_write = 0;
             }
 
-            signal_sem(semid_ringspeicher, 0); //Schreibzugriff abgeben
-            signal_sem(semid_ringspeicher, 2); //Spooler über Druckauftrag informieren
+            //Schreibzugriff abgeben
+            signal_sem(semid_ringspeicher, 0);
+            //Spooler über Druckauftrag informieren
+            signal_sem(semid_ringspeicher, 2);
 
-            //detach shared memory
+            //Shared Memory ausblenden
             shmdt(shared_mem);
             shmdt(shared_child_mem);
             shmdt(shared_run_mem);
@@ -364,13 +371,15 @@ int main() {
 
     
     
-    // ### Sauberes Beenden ###
+    /**
+     * Beenden des Programms
+     * */
     
-    /**Entfernen der SharedMemory's der Kindprozesse, welche in der Warteschlange stehen 
-     * & noch keinem Drucker zugewiesen wurden*/
+    //Entfernen der SharedMemory's der Kindprozesse, welche in der Warteschlange stehen
+    //& noch keinem Drucker zugewiesen wurden
     shared_mem = (int *) shmat(shm_id, NULL, 0);
-    /**So lange durchlaufen bis LesePos gleich NextSchreibePos,
-     * falls beide zu beginn gleich sind, prüfen ob Warteschlange komplett voll */
+    //So lange durchlaufen bis LesePos gleich NextSchreibePos,
+    //falls beide zu Beginn gleich sind, prüfen ob Warteschlange komplett voll
     while (shared_mem[6] != shared_mem[5] || get_sem(semid_ringspeicher, 1) == 0){
         int toEndID = shared_mem[shared_mem[6]];
         shmctl(toEndID, IPC_RMID, NULL);
@@ -378,7 +387,7 @@ int main() {
         if (shared_mem[6] == 5){
             shared_mem[6] = 0;
         }
-        /**signal der Sem um Endlosschleife zu verhindern*/
+        //signal der Sem um Endlosschleife zu verhindern
         signal_sem(semid_ringspeicher, 1);
     }
 
@@ -389,7 +398,8 @@ int main() {
     signal_sem(semid_druckerkommunikation, 0); //Spooler aus wait für Drucker1 holen
     signal_sem(semid_ringspeicher, 2); //Spooler aus wait holen
 
-    for (int i = 0; i < children_counter; i++) { //Anwendungen aus wait holen
+    for (int i = 0; i < children_counter; i++) {
+        //Anwendungen aus wait holen
         signal_sem(semid_ringspeicher, 1);
         signal_sem(semid_ringspeicher, 0);
     }
@@ -410,9 +420,9 @@ int main() {
     shmctl(shm_run_id, IPC_RMID, NULL);
 
     return 0;
-
-
 }
+
+
 
 void sigterm_handler(int signb) {
     *shared_run_mem = 0;
