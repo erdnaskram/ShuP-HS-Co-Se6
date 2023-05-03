@@ -91,37 +91,37 @@ int main() {
     
 
     /**Semaphoren Anwendungen <-> Druckerspooler*/
-    int semid = semget(IPC_PRIVATE, 3, 0777 | IPC_CREAT);
-    if (semid == -1) {
+    int semid_ringspeicher = semget(IPC_PRIVATE, 3, 0777 | IPC_CREAT);
+    if (semid_ringspeicher == -1) {
         perror("Fehler in semget von Anwendungen und Druckerspooler");
         exit(1);
     }
     
     //Initialisierung der Semaphoren
     //0. Sem = mutex
-    semctl(semid, 0, SETVAL, 1);
+    semctl(semid_ringspeicher, 0, SETVAL, 1);
     //1. Sem = erzeuger, Warteschlange leer
-    semctl(semid, 1, SETVAL, 5);
+    semctl(semid_ringspeicher, 1, SETVAL, 5);
     //2. Sem = verbraucher, Warteschlange voll
-    semctl(semid, 2, SETVAL, 0);
+    semctl(semid_ringspeicher, 2, SETVAL, 0);
     
     
     /**Semaphoren Druckerspooler <-> Drucker*/
-    int semid2 = semget(IPC_PRIVATE, 4, 0777 | IPC_CREAT);
-    if (semid2 == -1) {
+    int semid_druckerkommunikation = semget(IPC_PRIVATE, 4, 0777 | IPC_CREAT);
+    if (semid_druckerkommunikation == -1) {
         perror("Fehler in semget von Druckerspooler und Druckern");
         exit(1);
     }
 
     //Initialisierung der Semaphoren
     //0. Sem = drucker1, Warteschlange leer
-    semctl(semid2, 0, SETVAL, 1);
+    semctl(semid_druckerkommunikation, 0, SETVAL, 1);
     //1. Sem = drucker2, Warteschlange leer
-    semctl(semid2, 1, SETVAL, 1);
+    semctl(semid_druckerkommunikation, 1, SETVAL, 1);
     //2. Sem = drucker1, Warteschlange voll
-    semctl(semid2, 2, SETVAL, 0);
+    semctl(semid_druckerkommunikation, 2, SETVAL, 0);
     //3. Sem = drucker2, Warteschlange voll
-    semctl(semid2, 3, SETVAL, 0);
+    semctl(semid_druckerkommunikation, 3, SETVAL, 0);
     
 
     
@@ -142,19 +142,19 @@ int main() {
             int *next_to_read = &shared_mem[6];
 
             //Warten bis etwas in Druckwarteschlange steht
-            wait_sem(semid, 2);
+            wait_sem(semid_ringspeicher, 2);
 
             //Schleife frühzeitig beim Beenden verlassen
             if (!*shared_run_mem){
                 //Um das Abbrechen während arbeitsbeginn zu handeln wird die Druckerwarteschlange wieder 1 hochgezählt
-                signal_sem(semid, 2);
+                signal_sem(semid_ringspeicher, 2);
                 continue;
             }
 
             int shared_mem_child_id = shared_mem[*next_to_read];
 
             //auf druckenden Drucker warten
-            wait_sem(semid2, drucker_turn);
+            wait_sem(semid_druckerkommunikation, drucker_turn);
 
             //Schleife frühzeitig beim Beenden verlassen
             if (!*shared_run_mem)
@@ -162,10 +162,10 @@ int main() {
 
             shared_drucker_mem[drucker_turn] = shared_mem_child_id;
             //Druckplatz belegen
-            signal_sem(semid2, drucker_turn + 2);
+            signal_sem(semid_druckerkommunikation, drucker_turn + 2);
 
             //einen Platz in Druckerwarteschlange freigeben
-            signal_sem(semid, 1);
+            signal_sem(semid_ringspeicher, 1);
 
             //Druckaufträge abwechselnd an Drucker verteilen
             drucker_turn++;
@@ -206,7 +206,7 @@ int main() {
 
         while (*shared_run_mem) {
             //auf Druckauftrag warten
-            wait_sem(semid2, drucker_nr + 2);
+            wait_sem(semid_druckerkommunikation, drucker_nr + 2);
 
             //Schleife frühzeitig beim Beenden verlassen
             if (!*shared_run_mem)
@@ -229,7 +229,7 @@ int main() {
             //Shared Memory freigeben
             shmctl(to_print_id, IPC_RMID, NULL);
             //Druckplatz freigeben
-            signal_sem(semid2, drucker_nr); 
+            signal_sem(semid_druckerkommunikation, drucker_nr);
         }
 
         //Shared Memory ausblenden
@@ -255,7 +255,7 @@ int main() {
 
         while (*shared_run_mem) {
             //auf Druckauftrag warten
-            wait_sem(semid2, drucker_nr + 2);
+            wait_sem(semid_druckerkommunikation, drucker_nr + 2);
 
             //Schleife frühzeitig beim Beenden verlassen
             if (!*shared_run_mem)
@@ -278,7 +278,7 @@ int main() {
             //Shared Memory freigeben
             shmctl(to_print_id, IPC_RMID, NULL);
             //Druckplatz freigeben
-            signal_sem(semid2, drucker_nr);
+            signal_sem(semid_druckerkommunikation, drucker_nr);
         }
 
         //Shared Memory ausblenden
@@ -315,14 +315,14 @@ int main() {
             int pages = rand() % 5 + 2;
 
             //einen Platz in Druckerwarteschlange belegen
-            wait_sem(semid, 1);
+            wait_sem(semid_ringspeicher, 1);
             
             //Schleife frühzeitig beim Beenden verlassen
             if (!*shared_run_mem)
                 exit(0);
 
             //auf Schreibzugriff warten
-            wait_sem(semid, 0);
+            wait_sem(semid_ringspeicher, 0);
 
             //Schleife frühzeitig beim Beenden verlassen
             if (!*shared_run_mem)
@@ -349,8 +349,8 @@ int main() {
                 *nextToWrite = 0;
             }
 
-            signal_sem(semid, 0); //Schreibzugriff abgeben
-            signal_sem(semid, 2); //Spooler über Druckauftrag informieren
+            signal_sem(semid_ringspeicher, 0); //Schreibzugriff abgeben
+            signal_sem(semid_ringspeicher, 2); //Spooler über Druckauftrag informieren
 
             //detach shared memory
             shmdt(shared_mem);
@@ -371,7 +371,7 @@ int main() {
     shared_mem = (int *) shmat(shm_id, NULL, 0);
     /**So lange durchlaufen bis LesePos gleich NextSchreibePos,
      * falls beide zu beginn gleich sind, prüfen ob Warteschlange komplett voll */
-    while (shared_mem[6] != shared_mem[5] || get_sem(semid, 1) == 0){
+    while (shared_mem[6] != shared_mem[5] || get_sem(semid_ringspeicher, 1) == 0){
         int toEndID = shared_mem[shared_mem[6]];
         shmctl(toEndID, IPC_RMID, NULL);
         shared_mem[6]++;
@@ -379,27 +379,27 @@ int main() {
             shared_mem[6] = 0;
         }
         /**signal der Sem um Endlosschleife zu verhindern*/
-        signal_sem(semid, 1);
+        signal_sem(semid_ringspeicher, 1);
     }
 
     //bei feststeckenden Prozessen in waits
-    signal_sem(semid2, 2); //Drucker1 aus wait holen
-    signal_sem(semid2, 3); //Drucker2 aus wait holen
-    signal_sem(semid2, 1); //Spooler aus wait für Drucker2 holen
-    signal_sem(semid2, 0); //Spooler aus wait für Drucker1 holen
-    signal_sem(semid, 2); //Spooler aus wait holen
+    signal_sem(semid_druckerkommunikation, 2); //Drucker1 aus wait holen
+    signal_sem(semid_druckerkommunikation, 3); //Drucker2 aus wait holen
+    signal_sem(semid_druckerkommunikation, 1); //Spooler aus wait für Drucker2 holen
+    signal_sem(semid_druckerkommunikation, 0); //Spooler aus wait für Drucker1 holen
+    signal_sem(semid_ringspeicher, 2); //Spooler aus wait holen
 
     for (int i = 0; i < children_counter; i++) { //Anwendungen aus wait holen
-        signal_sem(semid, 1);
-        signal_sem(semid, 0);
+        signal_sem(semid_ringspeicher, 1);
+        signal_sem(semid_ringspeicher, 0);
     }
 
     //Warten auf Beenden der Kind-Prozesse
     while (wait(NULL) != -1);
 
     //Semaphoren löschen
-    semctl(semid, 0, IPC_RMID, 0);
-    semctl(semid2, 0, IPC_RMID, 0);
+    semctl(semid_ringspeicher, 0, IPC_RMID, 0);
+    semctl(semid_druckerkommunikation, 0, IPC_RMID, 0);
 
     // Shared Memory-Bereich detachen
     shmdt(shared_run_mem);
