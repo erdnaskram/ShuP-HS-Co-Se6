@@ -5,70 +5,70 @@ Semaphore warteschlangeLeer = 5; //Sem-Ringspeicher[1]
 Semaphore warteschlangeVoll = 0; //Sem-Ringspeicher[2]
 
 //Semaphoren Druckerspooler <-> Drucker
-Semaphore DruckerWarteschlangeLeer[0] = 1;	//Sem-DruckerKommunikation[0]
-Semaphore DruckerWarteschlangeLeer[1] = 1;	//Sem-DruckerKommunikation[1]
-Semaphore DruckerWarteschlangeVoll[0] = 0;	//Sem-DruckerKommunikation[2]
-Semaphore DruckerWarteschlangeVoll[1] = 0;	//Sem-DruckerKommunikation[3]
+Semaphore druckerwarteschlangeLeer[0] = 1;	//Sem-DruckerKommunikation[0]
+Semaphore druckerwarteschlangeLeer[1] = 1;	//Sem-DruckerKommunikation[1]
+Semaphore druckerwarteschlangeVoll[0] = 0;	//Sem-DruckerKommunikation[2]
+Semaphore druckerwarteschlangeVoll[1] = 0;	//Sem-DruckerKommunikation[3]
 
-
+SharedMemory warteschlange[7]; // 1.-5. als warteschlange, 6. NextToRead, 7. NextToWrite
+SharedMemory sharedMem_Drucker[2]; // 1.-5. als warteschlange, 6. NextToRead, 7. NextToWrite
 
 /**
-* Spooler
+** Spooler
 */
 void Spooler(void) {
 	Integer druckerTurn = 0;
 	while(true){
 		wait(warteschlangeVoll);
-		auftrag = leseNaechstenAuftragAusSharedMemory_h();
+		auftrag = leseNaechstenAuftragAusSharedMemory_h(warteschlange);
 
-		wait(DruckerWarteschlangeLeer[druckerTurn])
+		wait(druckerwarteschlangeLeer[druckerTurn])
 		schreibeAufragAbwechselndAnDrucker_h(druckerTurn, auftrag);
-		signal(DruckerWarteschlangeVoll[druckerTurn]);
+		signal(druckerwarteschlangeVoll[druckerTurn]);
 
 		signal(warteschlangeLeer);
 
-		druckerTurn = (druckerTurn+1) % 2;
+		druckerTurn = naechsterDrucker_h(druckerTurn);
 	}
 }
 
 
 
 /**
-* Drucker1-Prozess
+** Drucker1-Prozess
 */
 void Drucker1(void) {
 	while(true) {
-		wait(DruckerWarteschlangeVoll[1])
-		schreibeAufragAbwechselndAnDrucker_h();
-		signal(DruckerWarteschlangeLeer[1]);
+		wait(druckerwarteschlangeVoll[1])
+		schreibeAufragAbwechselndAnDrucker_h(warteschlange);
+		signal(druckerwarteschlangeLeer[1]);
 	}
 }
 
 
 
 /**
-* Drucker2-Prozess
+** Drucker2-Prozess
 */
 void Drucker2(void) {
 	while(true) {
-		wait(DruckerWarteschlangeVoll[2])
-		schreibeAufragAbwechselndAnDrucker_h();
-		signal(DruckerWarteschlangeLeer[2]);
+		wait(druckerwarteschlangeVoll[2])
+		schreibeAufragAbwechselndAnDrucker_h(warteschlange);
+		signal(druckerwarteschlangeLeer[2]);
 	}
 }
 
 
 
 /**
-* Kindprozesse/Erzeuger
+** Kindprozesse/Erzeuger
 */
 void Anwendung(void) {
 	while(true) {
 		wait(warteschlangeLeer);
 		wait(mutex);
-		schreibeAuftragInNaechstenFreienSpeicher_h();
+		schreibeAuftragInNaechstenFreienSpeicher_h(warteschlange);
 		signal(mutex);
 		signal(warteschlangeVoll);
 	}
-
 }
