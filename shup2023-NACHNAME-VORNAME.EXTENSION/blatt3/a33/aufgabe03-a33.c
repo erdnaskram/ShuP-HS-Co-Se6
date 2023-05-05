@@ -1,6 +1,6 @@
 /*
  * aufgabe03-a33.c
- * Copyright (C) 2023 Zoe Schulz <zoe.schulz@mail.de>
+ * Copyright (C) 2023 Studis :)
  *
  */
 
@@ -12,6 +12,12 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <sys/sem.h>
+
+#define SEMAPHORE_MUTEX 0
+#define SEMAPHORE_EMPTY 1
+#define SEMAPHORE_FULL 2
+#define NEXT_TO_WRITE 5
+#define NEXT_TO_READ 6
 
 void sigterm_handler(int);
 int *shared_run_mem;
@@ -61,17 +67,17 @@ int main() {
 
     //Shared Memory-Bereich erzeugen
     //5 int-Werte (jeweils SharedMemoryID für 1 Child) + 2 int-Werte (next to read + next to write) = 7 int-Werte
-    int shm_id = shmget(IPC_PRIVATE, 7 * sizeof(int), 0777 | IPC_CREAT);
-    if (shm_id < 0) {
+    int shm_ringspeicher_id = shmget(IPC_PRIVATE, 7 * sizeof(int), 0777 | IPC_CREAT);
+    if (shm_ringspeicher_id < 0) {
         printf("Fehler beim Erzeugen des Shared Memory-Bereichs für Warteschlange + Counter\n");
         return 1;
     }
 
     //Initialisierung des Shared Memory-Bereichs
-    int *shared_mem = (int *) shmat(shm_id, NULL, 0);
-    shared_mem[5] = 0; // Next to Write
-    shared_mem[6] = 0; // Next to Read
-    shmdt(shared_mem);
+    int *shm_ringspeicher = (int *) shmat(shm_ringspeicher_id, NULL, 0);
+    shm_ringspeicher[NEXT_TO_WRITE] = 0; // Next to Write
+    shm_ringspeicher[NEXT_TO_READ] = 0; // Next to Read
+    shmdt(shm_ringspeicher);
     
     
     /**Kommunikation Spooler -> Drucker*/
@@ -138,24 +144,24 @@ int main() {
         perror("Fehler beim Erzeugen des Spooler-Prozesses");
         return 1;
     } else if (spooler == 0) {
-        shared_mem = (int *) shmat(shm_id, NULL, 0);
+        shm_ringspeicher = (int *) shmat(shm_ringspeicher_id, NULL, 0);
         int *shared_drucker_mem = (int *) shmat(shm_drucker_id, NULL, 0);
         int drucker_turn = 0;
 
         while (*shared_run_mem) {
-            int *next_to_read = &shared_mem[6];
+            int *next_to_read = &shm_ringspeicher[NEXT_TO_READ];
 
             //Warten bis etwas in Druckwarteschlange steht
-            wait_sem(semid_ringspeicher, 2);
+            wait_sem(semid_ringspeicher, SEMAPHORE_FULL);
 
             //Schleife frühzeitig beim Beenden verlassen
             if (!*shared_run_mem){
                 //Um das Abbrechen während arbeitsbeginn zu handeln wird die Druckerwarteschlange wieder 1 hochgezählt
-                signal_sem(semid_ringspeicher, 2);
+                signal_sem(semid_ringspeicher, SEMAPHORE_FULL);
                 continue;
             }
 
-            int shared_mem_child_id = shared_mem[*next_to_read];
+            int shared_mem_child_id = shm_ringspeicher[*next_to_read];
 
             //auf druckenden Drucker warten
             wait_sem(semid_druckerkommunikation, drucker_turn);
@@ -169,7 +175,7 @@ int main() {
             signal_sem(semid_druckerkommunikation, drucker_turn + 2);
 
             //einen Platz in Druckerwarteschlange freigeben
-            signal_sem(semid_ringspeicher, 1);
+            signal_sem(semid_ringspeicher, SEMAPHORE_EMPTY);
 
             //Druckaufträge abwechselnd an Drucker verteilen
             drucker_turn++;
@@ -188,7 +194,7 @@ int main() {
 
         //Shared Memory ausblenden
         shmdt(shared_run_mem);
-        shmdt(shared_mem);
+        shmdt(shm_ringspeicher);
         shmdt(shared_drucker_mem);
 
         return 0;
@@ -315,19 +321,19 @@ int main() {
             perror("Fehler beim Erzeugen des Kindprozesses\n");
             return 1;
         } else if (pid == 0) { // wennn pid = 0 ist, ist es ein Kindprozess
-            shared_mem = (int *) shmat(shm_id, NULL, 0);
+            shm_ringspeicher = (int *) shmat(shm_ringspeicher_id, NULL, 0);
 
             int pages = rand() % 5 + 2;
 
             //einen Platz in Druckerwarteschlange belegen
-            wait_sem(semid_ringspeicher, 1);
+            wait_sem(semid_ringspeicher, SEMAPHORE_EMPTY);
             
             //Schleife frühzeitig beim Beenden verlassen
             if (!*shared_run_mem)
                 exit(0);
 
             //auf Schreibzugriff warten
-            wait_sem(semid_ringspeicher, 0);
+            wait_sem(semid_ringspeicher, SEMAPHORE_MUTEX);
 
             //Schleife frühzeitig beim Beenden verlassen
             if (!*shared_run_mem)
@@ -345,8 +351,8 @@ int main() {
                        shared_child_mem[i]);
             }
 
-            int *next_to_write = &shared_mem[5];
-            shared_mem[*next_to_write] = shm_child_id;
+            int *next_to_write = &shm_ringspeicher[NEXT_TO_WRITE];
+            shm_ringspeicher[*next_to_write] = shm_child_id;
 
             //im Ringspeicher eins weiter zählen, wenn 5 dann wieder auf 0
             (*next_to_write)++;
@@ -355,12 +361,12 @@ int main() {
             }
 
             //Schreibzugriff abgeben
-            signal_sem(semid_ringspeicher, 0);
+            signal_sem(semid_ringspeicher, SEMAPHORE_MUTEX);
             //Spooler über Druckauftrag informieren
-            signal_sem(semid_ringspeicher, 2);
+            signal_sem(semid_ringspeicher, SEMAPHORE_FULL);
 
             //Shared Memory ausblenden
-            shmdt(shared_mem);
+            shmdt(shm_ringspeicher);
             shmdt(shared_child_mem);
             shmdt(shared_run_mem);
 
@@ -377,18 +383,18 @@ int main() {
     
     //Entfernen der SharedMemory's der Kindprozesse, welche in der Warteschlange stehen
     //& noch keinem Drucker zugewiesen wurden
-    shared_mem = (int *) shmat(shm_id, NULL, 0);
+    shm_ringspeicher = (int *) shmat(shm_ringspeicher_id, NULL, 0);
     //So lange durchlaufen bis LesePos gleich NextSchreibePos,
     //falls beide zu Beginn gleich sind, prüfen ob Warteschlange komplett voll
-    while (shared_mem[6] != shared_mem[5] || get_sem(semid_ringspeicher, 1) == 0){
-        int toEndID = shared_mem[shared_mem[6]];
+    while (shm_ringspeicher[NEXT_TO_READ] != shm_ringspeicher[NEXT_TO_WRITE] || get_sem(semid_ringspeicher, SEMAPHORE_EMPTY) == 0){
+        int toEndID = shm_ringspeicher[shm_ringspeicher[NEXT_TO_READ]];
         shmctl(toEndID, IPC_RMID, NULL);
-        shared_mem[6]++;
-        if (shared_mem[6] == 5){
-            shared_mem[6] = 0;
+        shm_ringspeicher[NEXT_TO_READ]++;
+        if (shm_ringspeicher[NEXT_TO_READ] == 5){
+            shm_ringspeicher[NEXT_TO_READ] = 0;
         }
         //signal der Sem um Endlosschleife zu verhindern
-        signal_sem(semid_ringspeicher, 1);
+        signal_sem(semid_ringspeicher, SEMAPHORE_EMPTY);
     }
 
     //bei feststeckenden Prozessen in waits
@@ -396,12 +402,12 @@ int main() {
     signal_sem(semid_druckerkommunikation, 3); //Drucker2 aus wait holen
     signal_sem(semid_druckerkommunikation, 1); //Spooler aus wait für Drucker2 holen
     signal_sem(semid_druckerkommunikation, 0); //Spooler aus wait für Drucker1 holen
-    signal_sem(semid_ringspeicher, 2); //Spooler aus wait holen
+    signal_sem(semid_ringspeicher, SEMAPHORE_FULL); //Spooler aus wait holen
 
     for (int i = 0; i < children_counter; i++) {
         //Anwendungen aus wait holen
-        signal_sem(semid_ringspeicher, 1);
-        signal_sem(semid_ringspeicher, 0);
+        signal_sem(semid_ringspeicher, SEMAPHORE_EMPTY);
+        signal_sem(semid_ringspeicher, SEMAPHORE_MUTEX);
     }
 
     //Warten auf Beenden der Kind-Prozesse
@@ -415,7 +421,7 @@ int main() {
     shmdt(shared_run_mem);
 
     // Shared Memory-Bereich löschen
-    shmctl(shm_id, IPC_RMID, NULL);
+    shmctl(shm_ringspeicher_id, IPC_RMID, NULL);
     shmctl(shm_drucker_id, IPC_RMID, NULL);
     shmctl(shm_run_id, IPC_RMID, NULL);
 
