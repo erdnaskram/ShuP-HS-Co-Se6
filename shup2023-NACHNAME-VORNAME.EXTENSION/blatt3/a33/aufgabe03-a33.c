@@ -195,108 +195,63 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-
+    /**
+     * Drucker-Prozesse Init
+     * */
+    int druckerColour = 32;
 
     /**
-     * Drucker1-Prozess
+     * Drucker-Prozesse
      * */
-    int drucker1 = fork();
+    for(int i = 0; i < 2; i++){
+        int drucker = fork();
 
-    if (drucker1 == -1) {
-        perror("Fehler beim Erzeugen des Drucker1-Prozesses");
-        return 1;
-    } else if (drucker1 == 0) {
-        int drucker_nr = 0;
-        int *shared_drucker_mem = (int *) shmat(shm_drucker_id, NULL, 0);
+        if (drucker == -1) {
+            perror("Fehler beim Erzeugen des Drucker1-Prozesses");
+            return 1;
+        } else if (drucker == 0) {
+            //zwischen den beiden Druckern wechseln
+            int drucker_nr = i;
+            if(drucker_nr)
+                druckerColour = 93;
 
-        while (*shared_run_mem) {
-            //auf Druckauftrag warten
-            wait_sem(semid_druckerkommunikation, drucker_nr + 2);
+            int *shared_drucker_mem = (int *) shmat(shm_drucker_id, NULL, 0);
 
-            //Schleife frühzeitig beim Beenden verlassen
-            if (!*shared_run_mem)
-                continue;
+            while (*shared_run_mem) {
+                //auf Druckauftrag warten
+                wait_sem(semid_druckerkommunikation, drucker_nr + 2);
 
-            int to_print_id = shared_drucker_mem[drucker_nr];
-            int *shared_child_mem = (int *) shmat(to_print_id, NULL, 0);
+                //Schleife frühzeitig beim Beenden verlassen
+                if (!*shared_run_mem)
+                    continue;
 
-            //Druckvorgang
-            for (int i = 1; i <= shared_child_mem[0]; i++) {
-                printf("\033[0;32mDrucker %i druckt Druckauftrag mit ID %i: Seite %i mit Inhalt %i\033[0;0m\n",
-                       drucker_nr + 1, to_print_id, i, shared_child_mem[i]);
-                sleep(1);
-                printf("\033[0;32mDrucker %i hat Druckauftrag mit ID %i gedruckt: Seite %i\033[0;0m\n",
-                       drucker_nr + 1, to_print_id, i);
+                int to_print_id = shared_drucker_mem[drucker_nr];
+                int *shared_child_mem = (int *) shmat(to_print_id, NULL, 0);
+
+                //Druckvorgang
+                for (int i = 1; i <= shared_child_mem[0]; i++) {
+                    printf("\033[0;%imDrucker %i druckt Druckauftrag mit ID %i: Seite %i mit Inhalt %i\033[0;0m\n", druckerColour, drucker_nr + 1, to_print_id, i, shared_child_mem[i]);
+                    sleep(1);
+                    printf("\033[0;%imDrucker %i hat Druckauftrag mit ID %i gedruckt: Seite %i\033[0;0m\n", druckerColour, drucker_nr + 1, to_print_id, i);
+                }
+
+                //Shared Memory-Bereich ausblenden
+                shmdt(shared_child_mem);
+
+                //Shared Memory-Bereich freigeben
+                shmctl(to_print_id, IPC_RMID, NULL);
+
+                //Druckplatz freigeben
+                signal_sem(semid_druckerkommunikation, drucker_nr);
             }
 
-            //Shared Memory ausblenden
-            shmdt(shared_child_mem);
+            //Shared Memory-Bereiche ausblenden
+            shmdt(shared_run_mem);
+            shmdt(shared_drucker_mem);
 
-            //Shared Memory freigeben
-            shmctl(to_print_id, IPC_RMID, NULL);
-
-			//Druckplatz freigeben
-            signal_sem(semid_druckerkommunikation, drucker_nr);
+            return 0;
         }
-
-        //Shared Memory ausblenden
-        shmdt(shared_run_mem);
-        shmdt(shared_drucker_mem);
-
-        return 0;
     }
-
-
-
-    /**
-     * Drucker2-Prozess
-     * */
-    int drucker2 = fork();
-
-    if (drucker2 == -1) {
-        perror("Fehler beim Erzeugen des Drucker2-Prozesses");
-        return 1;
-    } else if (drucker2 == 0){
-        int drucker_nr = 1;
-        int *shared_drucker_mem = (int *) shmat(shm_drucker_id, NULL, 0);
-
-        while (*shared_run_mem) {
-            //auf Druckauftrag warten
-            wait_sem(semid_druckerkommunikation, drucker_nr + 2);
-
-            //Schleife frühzeitig beim Beenden verlassen
-            if (!*shared_run_mem)
-                continue;
-
-            int to_print_id = shared_drucker_mem[drucker_nr];
-            int *shared_child_mem = (int *) shmat(to_print_id, NULL, 0);
-
-            //Druckvorgang
-            for (int i = 1; i <= shared_child_mem[0]; i++) {
-                printf("\033[0;93mDrucker %i druckt Druckauftrag mit ID %i: Seite %i mit Inhalt %i\033[0;0m\n",
-                       drucker_nr + 1, to_print_id, i, shared_child_mem[i]);
-                sleep(1);
-                printf("\033[0;93mDrucker %i hat Druckauftrag mit ID %i gedruckt: Seite %i\033[0;0m\n",
-                       drucker_nr + 1, to_print_id, i);
-            }
-
-            //Shared Memory ausblenden
-            shmdt(shared_child_mem);
-
-			//Shared Memory freigeben
-            shmctl(to_print_id, IPC_RMID, NULL);
-
-			//Druckplatz freigeben
-            signal_sem(semid_druckerkommunikation, drucker_nr);
-        }
-
-        //Shared Memory ausblenden
-        shmdt(shared_run_mem);
-        shmdt(shared_drucker_mem);
-
-        return 0;
-    }
-
 
 
     /**
@@ -311,7 +266,6 @@ int main(int argc, char* argv[]) {
     /**
      * Kindprozesse
      * */
-
     while (*shared_run_mem) {
         //Anzahl der Kinder mitzählen, um Prozesse aus wait zu holen
         children_counter++;

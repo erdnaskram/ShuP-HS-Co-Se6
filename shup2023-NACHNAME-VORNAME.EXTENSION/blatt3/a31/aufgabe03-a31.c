@@ -4,7 +4,7 @@
 #include <sys/sem.h>
 
 #define SEMAPHORE_MUTEX1 0
-#define SEMAPHORE_MUTEX2 0
+#define SEMAPHORE_MUTEX2 1
 
 //wait-Implementierung
 void wait_sem(int semid, int semnum) {
