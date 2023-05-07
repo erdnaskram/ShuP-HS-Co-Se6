@@ -3,6 +3,9 @@
 #include <unistd.h>
 #include <sys/sem.h>
 
+#define SEMAPHORE_MUTEX1 0
+#define SEMAPHORE_MUTEX2 0
+
 //wait-Implementierung
 void wait_sem(int semid, int semnum) {
     struct sembuf sops;
@@ -31,7 +34,7 @@ void signal_sem(int semid, int semnum) {
     }
 }
 
-int main() {
+int main(int argc, char *argv[]) {
 	printf("Diese Lösung wurde erstellt von <Vorname> <Nachname>\n");
 
     //Semaphoren anlegen
@@ -52,13 +55,13 @@ int main() {
     } else if (pid == 0) {
         //Kindprozess
         printf("Kindprozess gestartet\n");
-        wait_sem(semid, 0); //auf Signal des Vaterprozesses warten
+        wait_sem(semid, SEMAPHORE_MUTEX1); //auf Signal des Vaterprozesses warten
         printf("Kindprozess hat Signal von Vaterprozess erhalten\n");
         printf("Nachricht eingeben: ");
         fflush(stdout);
         char msg[100];
         fgets(msg, 100, stdin);
-        signal_sem(semid, 1); //dem Vaterprozess signalisieren
+        signal_sem(semid, SEMAPHORE_MUTEX2); //dem Vaterprozess signalisieren
 		printf("Kindprozess hat Signal zu Vaterprozess gesendet\n");
         printf("Kindprozess beenden\n");
         exit(0);
@@ -69,11 +72,16 @@ int main() {
         fflush(stdout);
         char msg[100];
         fgets(msg, 100, stdin);
-        signal_sem(semid, 0); //dem Kindprozess signalisieren
+        signal_sem(semid, SEMAPHORE_MUTEX1); //dem Kindprozess signalisieren
         printf("Vaterprozess hat Signal zu Kindprozess gesendet\n");
-        wait_sem(semid, 1); //auf Signal des Kindprozesses warten
+        wait_sem(semid, SEMAPHORE_MUTEX2); //auf Signal des Kindprozesses warten
         printf("Vaterprozess hat Signal von Kindprozess erhalten\n");
         printf("Vaterprozess beenden\n");
+
+		//auf Kindprozess warten
+		int status;
+		pid_t pid = wait(&status);
+		printf("Kindprozess mit pid %i beendet mit Status %i\n", (int) pid, (int) status);
 
 		//Semaphorenfeld löschen
         semctl(semid, 0, IPC_RMID, 0);
