@@ -1,0 +1,18 @@
+Autor: <Vorname> <Nachname>
+Shell und Prozesse SS2023
+Blatt 3: Synchronisation
+Aufgabe 32
+
+Vorbedingung:
+Das aktuelle Arbeitsverzeichnis ist:
+blatt3/a32
+
+Generieranleitung:
+1. Generieren des ausführbaren Programms mit:
+gcc aufgabe03_a32.c
+
+Bediengungsanleitung:
+1. Start des ausführbaren Programms mit:
+./a.out <Anzahl Schleifendurchläufe> <Seed>
+2. Anzahl Schleifendurchläufe = Anzahl der zu erzeugenden Zufallsnachrichten des Vaterprozesses
+3. Seed = Initialisierungswert für des Zufallsgenerators rand()
