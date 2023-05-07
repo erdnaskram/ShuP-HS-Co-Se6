@@ -11,8 +11,8 @@ int main (int argc, char *argv[]){
 	printf("Programm gestartet\n");
 	printf("Bei 3-maligem SIGTERM oder SIGINT beendet sich das Programm\n");
 
-	signal(SIGTERM, sigtermhandler);
-	signal(SIGINT, sigtermhandler);
+	signal(SIGTERM, sigtermhandler); //15
+	signal(SIGINT, sigtermhandler); //2
 
 	while(1);
 

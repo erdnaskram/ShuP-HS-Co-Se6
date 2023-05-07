@@ -22,7 +22,6 @@ int main(int argc, char *argv[]) {
             execv(argv[0], argv);
         }
 
-        printf("EXIT #####1#####\n");
         printf("Error File not found: %s\n", argv[0]);
         exit(1);
 

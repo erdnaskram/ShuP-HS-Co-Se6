@@ -1,0 +1,16 @@
+Autor: <Vorname> <Nachname>
+Shell und Prozesse SS2023
+Blatt 3: Synchronisation
+Aufgabe 31
+
+Vorbedingung:
+Das aktuelle Arbeitsverzeichnis ist:
+blatt3/a31
+
+Generieranleitung:
+1. Generieren des ausführbaren Programms mit:
+gcc aufgabe03_a31.c
+
+Bediengungsanleitung:
+1. Start des ausführbaren Programms mit:
+./a.out

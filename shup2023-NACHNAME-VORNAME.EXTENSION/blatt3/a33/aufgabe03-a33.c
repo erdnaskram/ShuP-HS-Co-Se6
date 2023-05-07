@@ -78,8 +78,8 @@ int main() {
     shm_ringspeicher[NEXT_TO_WRITE] = 0; // Next to Write
     shm_ringspeicher[NEXT_TO_READ] = 0; // Next to Read
     shmdt(shm_ringspeicher);
-    
-    
+
+
     /**Kommunikation Spooler -> Drucker*/
     int shm_drucker_id = shmget(IPC_PRIVATE, 2 * sizeof(int), 0777 | IPC_CREAT);
     if (shm_drucker_id < 0) {
@@ -98,7 +98,7 @@ int main() {
     //Initialisierung des Shared Memory-Bereichs
     shared_run_mem = (int *) shmat(shm_run_id, NULL, 0);
     *shared_run_mem = 1;
-    
+
 
     /**Semaphoren Anwendungen <-> Druckerspooler*/
     int semid_ringspeicher = semget(IPC_PRIVATE, 3, 0777 | IPC_CREAT);
@@ -106,7 +106,7 @@ int main() {
         perror("Fehler in semget von Anwendungen und Druckerspooler");
         exit(1);
     }
-    
+
     //Initialisierung der Semaphoren
     //0. Sem = mutex
     semctl(semid_ringspeicher, 0, SETVAL, 1);
@@ -114,8 +114,8 @@ int main() {
     semctl(semid_ringspeicher, 1, SETVAL, 5);
     //2. Sem = verbraucher, Warteschlange voll
     semctl(semid_ringspeicher, 2, SETVAL, 0);
-    
-    
+
+
     /**Semaphoren Druckerspooler <-> Drucker*/
     int semid_druckerkommunikation = semget(IPC_PRIVATE, 4, 0777 | IPC_CREAT);
     if (semid_druckerkommunikation == -1) {
@@ -132,9 +132,9 @@ int main() {
     semctl(semid_druckerkommunikation, 2, SETVAL, 0);
     //3. Sem = drucker2, Warteschlange voll
     semctl(semid_druckerkommunikation, 3, SETVAL, 0);
-    
 
-    
+
+
     /**
      * Spooler-Prozess
      * */
@@ -200,8 +200,8 @@ int main() {
         return 0;
     }
 
-    
-    
+
+
     /**
      * Drucker1-Prozess
      * */
@@ -250,7 +250,7 @@ int main() {
     }
 
 
-    
+
     /**
      * Drucker2-Prozess
      * */
@@ -294,12 +294,12 @@ int main() {
         //Shared Memory ausblenden
         shmdt(shared_run_mem);
         shmdt(shared_drucker_mem);
-        
+
         return 0;
     }
 
 
-    
+
     /**
      * Kindprozesse Init
      * */
@@ -316,7 +316,7 @@ int main() {
         children_counter++;
         sleep(rand() % 5);
         pid = fork();
-        
+
         if (pid == -1) {
             perror("Fehler beim Erzeugen des Kindprozesses\n");
             return 1;
@@ -327,7 +327,7 @@ int main() {
 
             //einen Platz in Druckerwarteschlange belegen
             wait_sem(semid_ringspeicher, SEMAPHORE_EMPTY);
-            
+
             //Schleife frühzeitig beim Beenden verlassen
             if (!*shared_run_mem)
                 exit(0);
@@ -375,12 +375,12 @@ int main() {
 
     }
 
-    
-    
+
+
     /**
      * Beenden des Programms
      * */
-    
+
     //Entfernen der SharedMemory's der Kindprozesse, welche in der Warteschlange stehen
     //& noch keinem Drucker zugewiesen wurden
     shm_ringspeicher = (int *) shmat(shm_ringspeicher_id, NULL, 0);
