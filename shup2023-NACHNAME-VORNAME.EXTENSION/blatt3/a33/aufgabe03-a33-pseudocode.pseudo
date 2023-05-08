@@ -12,7 +12,7 @@ Semaphore druckerwarteschlangeVoll[1] = 0;	//Sem-DruckerKommunikation[3]
 
 //Shared Memory-Bereiche initialisieren
 SharedMemory warteschlange[7] = {0, 0, 0, 0, 0, 0, 0}; // 1.-5. als warteschlange, 6. NextToRead, 7. NextToWrite
-SharedMemory sharedMem_Drucker[2]; // 1.-5. als warteschlange, 6. NextToRead, 7. NextToWrite
+SharedMemory sharedMem_Drucker[2]; // 1. Kommunikation mit Drucker 1, 2. Kommunikation mit Drucker 2
 SharedMemory isRunning = 1; // Steuervariable für Beenden des Programms
 
 /**
@@ -70,15 +70,26 @@ void drucken(int druckerTurn){
 ** Anwendungs-Prozesse
 */
 void Anwendung(void) {
+	wait(warteschlangeLeer);
+	wait(mutex);
+
+	auftrag = erzeugeNeuenAuftrag_h();
+	schreibeAuftragInNaechstenFreienSpeicher_h(warteschlange, auftrag);
+
+	signal(mutex);
+	signal(warteschlangeVoll);
+}
+
+
+/**
+** Hauptprozess
+*/
+void Main(void) {
 	while(isRunning) {
-		wait(warteschlangeLeer);
-		wait(mutex);
-
-		auftrag = erzeugeNeuenAuftrag_h();
-		schreibeAuftragInNaechstenFreienSpeicher_h(warteschlange, auftrag);
-
-		signal(mutex);
-		signal(warteschlangeVoll);
+		fork();
+		if(istInChildProzessNachFork_h()) {
+			Anwendung();
+		}
 	}
 }
 
