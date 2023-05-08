@@ -25,7 +25,7 @@ void wait_sem(int semid, int semnum) {
 
 	//Operation auf Semaphore ausführen
     if (semop(semid, &sops, 1) == -1) {
-        perror("Fehler in wait-Implementierung\n");
+        perror("Fehler bei wait-Ausführung\n");
         exit(1);
     }
 }
@@ -39,7 +39,7 @@ void signal_sem(int semid, int semnum) {
 
 	//Operation auf Semaphore ausführen
     if (semop(semid, &sops, 1) == -1) {
-        perror("Fehler in signal-Implementierung");
+        perror("Fehler bei signal-Ausführung");
         exit(1);
     }
 }
@@ -61,8 +61,8 @@ int main(int argc, char* argv[]) {
     printf("Parent-Prozess-ID: %d\n", getpid());
 
 	//Signalhandler registrieren
-    signal(SIGTERM, sigterm_handler); //15
-    signal(SIGINT, sigterm_handler); //2
+    signal(SIGTERM, sigterm_handler);
+    signal(SIGINT, sigterm_handler);
 
     //Shared Memory-Bereich erzeugen
     //5 int-Werte (jeweils SharedMemoryID für 1 Child) + 2 int-Werte (next to read + next to write) = 7 int-Werte

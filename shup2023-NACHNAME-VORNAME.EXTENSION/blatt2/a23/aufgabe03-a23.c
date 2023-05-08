@@ -13,8 +13,8 @@ int main (int argc, char *argv[]){
 	printf("Bei 3-maligem SIGTERM oder SIGINT beendet sich das Programm\n");
 
 	//Signalhandler registrieren
-	signal(SIGTERM, sigtermhandler); //15
-	signal(SIGINT, sigtermhandler); //2
+	signal(SIGTERM, sigtermhandler);
+	signal(SIGINT, sigtermhandler);
 
 	while(1);
 

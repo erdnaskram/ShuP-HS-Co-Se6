@@ -15,4 +15,4 @@ Bedienungsanleitung:
 1. Start des ausführbaren Programms mit:
 ./a.out <Anzahl Schleifendurchläufe> <Seed>
 2. Anzahl Schleifendurchläufe = Anzahl der zu erzeugenden Zufallsnachrichten des Vaterprozesses
-3. Seed = Initialisierungswert für des Zufallsgenerators rand()
+3. Seed = Initialisierungswert des Zufallsgenerators rand()

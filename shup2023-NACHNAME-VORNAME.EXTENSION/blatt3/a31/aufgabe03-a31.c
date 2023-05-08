@@ -16,7 +16,7 @@ void wait_sem(int semid, int semnum) {
 
 	//Operation auf Semaphore ausführen
     if (semop(semid, &sops, 1) == -1) {
-        perror("Fehler in wait-Implementierung\n");
+        perror("Fehler bei wait-Ausführung\n");
         exit(1);
     }
 }
@@ -30,7 +30,7 @@ void signal_sem(int semid, int semnum) {
 
 	//Operation auf Semaphore ausführen
     if (semop(semid, &sops, 1) == -1) {
-        perror("Fehler in signal-Implementierung\n");
+        perror("Fehler bei signal-Ausführung\n");
         exit(1);
     }
 }
