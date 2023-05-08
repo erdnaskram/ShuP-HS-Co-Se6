@@ -57,8 +57,7 @@ int main(int argc, char *argv[]) {
         printf("Kindprozess gestartet\n");
         wait_sem(semid, SEMAPHORE_MUTEX1); //auf Signal des Vaterprozesses warten
         printf("Kindprozess hat Signal von Vaterprozess erhalten\n");
-        printf("Nachricht eingeben: ");
-        fflush(stdout);
+        printf("Nachricht eingeben: \n");
         char msg[100];
         fgets(msg, 100, stdin);
         signal_sem(semid, SEMAPHORE_MUTEX2); //dem Vaterprozess signalisieren
@@ -68,8 +67,7 @@ int main(int argc, char *argv[]) {
     } else {
         //Vaterprozess
         printf("Vaterprozess gestartet\n");
-        printf("Nachricht eingeben: ");
-        fflush(stdout);
+        printf("Nachricht eingeben: \n");
         char msg[100];
         fgets(msg, 100, stdin);
         signal_sem(semid, SEMAPHORE_MUTEX1); //dem Kindprozess signalisieren
@@ -80,8 +78,8 @@ int main(int argc, char *argv[]) {
 
 		//auf Kindprozess warten
 		int status;
-		pid_t pid = wait(&status);
-		printf("Kindprozess mit pid %i beendet mit Status %i\n", (int) pid, (int) status);
+		int pid = wait(&status);
+		printf("Kindprozess mit pid %i beendet mit Status %i\n", pid, status);
 
 		//Semaphorenfeld löschen
         semctl(semid, 0, IPC_RMID, 0);

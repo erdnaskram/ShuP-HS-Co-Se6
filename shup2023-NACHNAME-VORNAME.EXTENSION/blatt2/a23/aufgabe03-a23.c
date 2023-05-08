@@ -8,17 +8,20 @@ void sigtermhandler(int);
 int counter = 0;
 
 int main (int argc, char *argv[]){
+	printf("Diese Lösung wurde erstellt von <Vorname> <Nachname>\n");
+
 	printf("Programm gestartet\n");
 	printf("Bei 3-maligem SIGTERM oder SIGINT beendet sich das Programm\n");
 
+	//Signalhandler registrieren
 	signal(SIGTERM, sigtermhandler); //15
 	signal(SIGINT, sigtermhandler); //2
 
 	while(1);
 
-
 }
 
+//Signalhandler
 void sigtermhandler(int signb){
 	counter++;
 	printf("Signal: %i eingetroffen\n", signb);

@@ -1,7 +1,3 @@
-//
-// Created by #Studis19# on 14.04.23.
-//
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -30,8 +26,9 @@ void printPrompt() {
 }
 
 int main(int argc, char *argv[]) {
-    char input[INPUT_LENGHT];
+	printf("Diese Lösung wurde erstellt von <Vorname> <Nachname>\n");
 
+    char input[INPUT_LENGHT];
 
     while (1) {
         printPrompt();
@@ -53,7 +50,7 @@ int main(int argc, char *argv[]) {
         }
 
         //Eingabe in Parameter-Liste umwandeln
-        // Anzahl der Leerzeichen + 2, da NULL-Terminierung
+        //Anzahl der Leerzeichen + 2, da NULL-Terminierung
         char **params = (char **) malloc((spaces + 2) * sizeof(char *));
         params[0] = strtok(input, " ");
 
@@ -67,22 +64,15 @@ int main(int argc, char *argv[]) {
 
         if(child == -1) {
             fprintf(stderr, "Fehler beim Erzeugen des Kind-Prozesses");
-            return 1; //TODO Überprüfen, ob diese IF passt
+            return 1;
         } else if (child == 0) {
+			//Kindprozess
+
             int commandLength = (int) strlen(command);
-            if (command[0] == '/') {
+            if (command[0] == '/'
+					|| (command[0] == '.' && command[1] == '/')
+                    || (command[0] == '.' && command[1] == '.' && command[2] == '/')) {
                 execv(command, params);
-            //TODO execv kann ./ und ../ von alleine... :D
-            } else if ((command[0] == '.' && command[1] == '/')
-                        || (command[0] == '.' && command[1] == '.' && command[2] == '/')) {
-                char *pwd = getenv("PWD");
-                int pwdLength = (int) strlen(pwd);
-                char *fullCommand = (char *) malloc((pwdLength + commandLength + 1) * sizeof(char));
-                strcpy(fullCommand, pwd);
-                strcat(fullCommand, "/");
-                strcat(fullCommand, command);
-                execv(fullCommand, params);
-                free(fullCommand);
             } else {
                 //Programme im Standardverzeichnis suchen
                 char *paths = getenv("PATH");
@@ -90,13 +80,7 @@ int main(int argc, char *argv[]) {
                 int pathsLength = (int) strlen(paths);
                 char *splitPath;
                 char *commandPath = (char *) malloc((pathsLength + commandLength + 1) * sizeof(char));
-                //char *pathCopy = (char *) malloc((pathsLength + 1) * sizeof(char));
-                //strcpy(pathCopy, paths);
-                splitPath = strtok(paths, ":"); //hier war pathCopy
-                //strcpy(splitPathCopy, splitPath);
-                //strcat(splitPathCopy, "/");
-                //strcat(splitPathCopy, command);
-                //execv(splitPathCopy, params);
+                splitPath = strtok(paths, ":");
                 while (splitPath != NULL) {
                     strcpy(commandPath, splitPath);
                     strcat(commandPath, "/");
@@ -109,17 +93,15 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "Fehler: '%s' nicht gefunden (%s)\n", command, strerror(errno));
             exit(1);
         } else {
+			//Vaterprozess
             int status;
             pid_t pid = wait(&status);
             printf("Kindprozess mit pid %i beendet mit Status %i\n", (int) pid, (int) status);
         }
-        //TODO Parent-Prozess ist hier nicht benötigt?
-        
         free(params);
 
     }
 
-    //TODO return 0;?
-
+    return 0;
 
 }

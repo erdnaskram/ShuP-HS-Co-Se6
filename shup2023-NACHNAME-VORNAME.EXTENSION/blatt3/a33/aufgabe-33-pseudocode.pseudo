@@ -1,4 +1,4 @@
-// Initialisiere Semaphoren
+//Initialisiere Semaphoren
 //Semaphoren Anwendungen <-> Druckerspooler
 Semaphore mutex = 1; 		 	 //Sem-Ringspeicher[0]; Schreibzugriff auf "nextToWrite" aus Ringspeicher
 Semaphore warteschlangeLeer = 5; //Sem-Ringspeicher[1]
@@ -10,22 +10,26 @@ Semaphore druckerwarteschlangeLeer[1] = 1;	//Sem-DruckerKommunikation[1]
 Semaphore druckerwarteschlangeVoll[0] = 0;	//Sem-DruckerKommunikation[2]
 Semaphore druckerwarteschlangeVoll[1] = 0;	//Sem-DruckerKommunikation[3]
 
-SharedMemory warteschlange[7]; // 1.-5. als warteschlange, 6. NextToRead, 7. NextToWrite
+//Shared Memory-Bereiche initialisieren
+SharedMemory warteschlange[7] = {0, 0, 0, 0, 0, 0, 0}; // 1.-5. als warteschlange, 6. NextToRead, 7. NextToWrite
 SharedMemory sharedMem_Drucker[2]; // 1.-5. als warteschlange, 6. NextToRead, 7. NextToWrite
+SharedMemory isRunning = 1; // Steuervariable für Beenden des Programms
 
 /**
 ** Spooler
 */
 void Spooler(void) {
 	Integer druckerTurn = 0;
-	while(true){
+	while(isRunning){
 		wait(warteschlangeVoll);
+
 		auftrag = leseNaechstenAuftragAusSharedMemory_h(warteschlange);
 
 		wait(druckerwarteschlangeLeer[druckerTurn])
-		schreibeAufragAbwechselndAnDrucker_h(druckerTurn, auftrag);
-		signal(druckerwarteschlangeVoll[druckerTurn]);
 
+		schreibeAufragAnDrucker_h(sharedMem_Drucker[druckerTurn], auftrag);
+
+		signal(druckerwarteschlangeVoll[druckerTurn]);
 		signal(warteschlangeLeer);
 
 		druckerTurn = naechsterDrucker_h(druckerTurn);
@@ -37,38 +41,51 @@ void Spooler(void) {
 /**
 ** Drucker1-Prozess
 */
-void Drucker1(void) {
-	while(true) {
-		wait(druckerwarteschlangeVoll[1])
-		schreibeAufragAbwechselndAnDrucker_h(warteschlange);
-		signal(druckerwarteschlangeLeer[1]);
-	}
-}
 
+void Drucker1(void) {
+	drucken(0);
+}
 
 
 /**
 ** Drucker2-Prozess
 */
+
 void Drucker2(void) {
-	while(true) {
-		wait(druckerwarteschlangeVoll[2])
-		schreibeAufragAbwechselndAnDrucker_h(warteschlange);
-		signal(druckerwarteschlangeLeer[2]);
+	drucken(1);
+}
+
+void drucken(int druckerTurn){
+	while(isRunning){
+		wait(druckerwarteschlangeVoll[druckerTurn])
+		auftrag = leseNaechstenAuftragAusSharedMemory_h(sharedMem_Drucker[druckerTurn]);
+		ausgeben_h(auftrag);
+		signal(druckerwarteschlangeLeer[druckerTurn]);
 	}
 }
 
 
 
 /**
-** Kindprozesse/Erzeuger
+** Anwendungs-Prozesse
 */
 void Anwendung(void) {
-	while(true) {
+	while(isRunning) {
 		wait(warteschlangeLeer);
 		wait(mutex);
-		schreibeAuftragInNaechstenFreienSpeicher_h(warteschlange);
+
+		auftrag = erzeugeNeuenAuftrag_h();
+		schreibeAuftragInNaechstenFreienSpeicher_h(warteschlange, auftrag);
+
 		signal(mutex);
 		signal(warteschlangeVoll);
 	}
+}
+
+
+/**
+** Signalhandler zum Beenden des Programms
+*/
+void signalhandler(){
+	isRunning = false;
 }

@@ -2,34 +2,46 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <errno.h>
+#include <string.h>
 
 
 int main(int argc, char *argv[]) {
+	printf("Diese Lösung wurde erstellt von <Vorname> <Nachname>\n");
+
+    if (argc == 1) {
+        fprintf(stderr, "Fehler: Es muss ein Programm als Aufrufparameter mitgegeben werden\n");
+        return 1;
+    }
+
     int child = fork();
 
-    //Child
+    if (child == -1) {
+        perror("Fehler beim Erzeugen des Kind-Prozesses");
+        return 1;
+    }
+
     if (child == 0) {
+        //Kindprozess
 
-        if (argc == 2) {
-            execl(argv[1], argv[1], "", "", (char *) NULL);
-        } else {
-
-            for (int i = 1; i < argc; i++) {
-                argv[i - 1] = argv[i];
-            }
-            argv[argc - 1] = NULL;
-
-            execv(argv[0], argv);
+        //Argumente für Übergabe an execv vorbereiten
+        for (int i = 1; i < argc; i++) {
+            argv[i - 1] = argv[i];
         }
+        argv[argc - 1] = NULL;
 
-        printf("Error File not found: %s\n", argv[0]);
-        exit(1);
+        execv(argv[0], argv);
 
-    }//Parent
-    else {
+        fprintf(stderr,"Fehler! Argument: %s; Fehler-Nummer: %i (%s)\n", argv[0], errno, strerror(errno));
+        exit(errno);
+
+    } else {
+        //Vaterprozess
+
         int status;
-        pid_t pid = wait(&status);
-        printf("Kindprozess mit pid %i beendet mit Status %i\n", (int) pid, (int) status);
+        int pid = wait(&status);
+        printf("Kindprozess mit pid %i beendet mit Status %i\n", pid, status);
+
+        return 0;
     }
 }
-

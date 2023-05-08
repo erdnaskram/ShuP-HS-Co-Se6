@@ -1,0 +1,18 @@
+Autor: <Vorname> <Nachname>
+Shell und Prozesse SS2023
+Blatt 2: Prozesse unter Linux
+Aufgabe 24
+
+Vorbedingung:
+Das aktuelle Arbeitsverzeichnis ist:
+blatt2/a24
+
+Generieranleitung:
+1. Generieren des ausführbaren Programms mit:
+gcc -o Starten aufgabe02_a24.c
+
+Bedienungsanleitung:
+1. Start des ausführbaren Programms mit:
+./Starten <Programmname> <Programmargumente>
+2. Programmname = der Name des auszuführenden Programms
+3. optional Programmargumente = die Argumnte für das auszuführende Programm

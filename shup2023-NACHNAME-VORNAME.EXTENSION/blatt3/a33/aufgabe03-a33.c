@@ -14,7 +14,7 @@
 #define NEXT_TO_READ 6
 
 void sigterm_handler(int);
-int *shared_run_mem;
+int *shared_isRunning_mem;
 
 //wait-Implementierung
 void wait_sem(int semid, int semnum) {
@@ -93,8 +93,8 @@ int main(int argc, char* argv[]) {
     }
 
     //Initialisierung des Shared Memory-Bereichs
-    shared_run_mem = (int *) shmat(shm_run_id, NULL, 0);
-    *shared_run_mem = 1;
+    shared_isRunning_mem = (int *) shmat(shm_run_id, NULL, 0);
+    *shared_isRunning_mem = 1;
 
     //Semaphoren Anwendungen <-> Druckerspooler erzeugen
     int semid_ringspeicher = semget(IPC_PRIVATE, 3, 0777 | IPC_CREAT);
@@ -144,14 +144,14 @@ int main(int argc, char* argv[]) {
 
         int drucker_turn = 0;
 
-        while (*shared_run_mem) {
+        while (*shared_isRunning_mem) {
             int *next_to_read = &shm_ringspeicher[NEXT_TO_READ];
 
             //Warten bis etwas in Druckwarteschlange steht
             wait_sem(semid_ringspeicher, SEMAPHORE_FULL);
 
             //Schleife frühzeitig beim Beenden verlassen
-            if (!*shared_run_mem)
+            if (!*shared_isRunning_mem)
                 continue;
 
             int shared_mem_child_id = shm_ringspeicher[*next_to_read];
@@ -160,7 +160,7 @@ int main(int argc, char* argv[]) {
             wait_sem(semid_druckerkommunikation, drucker_turn);
 
             //Schleife frühzeitig beim Beenden verlassen
-            if (!*shared_run_mem)
+            if (!*shared_isRunning_mem)
                 continue;
 
 			//Drucker id für zu druckende Inhalte geben
@@ -188,7 +188,7 @@ int main(int argc, char* argv[]) {
         printf("Beachten Sie, dass Druckaufträge möglicherweise nicht ausgeführt werden konnten, da das Programm beendet wurde!\n");
 
         //Shared Memory-Bereiche ausblenden
-        shmdt(shared_run_mem);
+        shmdt(shared_isRunning_mem);
         shmdt(shm_ringspeicher);
         shmdt(shared_drucker_mem);
 
@@ -215,14 +215,15 @@ int main(int argc, char* argv[]) {
             if(drucker_nr)
                 druckerColour = 93;
 
+			//Shared Memory-Bereich einblenden
             int *shared_drucker_mem = (int *) shmat(shm_drucker_id, NULL, 0);
 
-            while (*shared_run_mem) {
+            while (*shared_isRunning_mem) {
                 //auf Druckauftrag warten
                 wait_sem(semid_druckerkommunikation, drucker_nr + 2);
 
                 //Schleife frühzeitig beim Beenden verlassen
-                if (!*shared_run_mem)
+                if (!*shared_isRunning_mem)
                     continue;
 
                 int to_print_id = shared_drucker_mem[drucker_nr];
@@ -246,7 +247,7 @@ int main(int argc, char* argv[]) {
             }
 
             //Shared Memory-Bereiche ausblenden
-            shmdt(shared_run_mem);
+            shmdt(shared_isRunning_mem);
             shmdt(shared_drucker_mem);
 
             return 0;
@@ -266,7 +267,7 @@ int main(int argc, char* argv[]) {
     /**
      * Kindprozesse
      * */
-    while (*shared_run_mem) {
+    while (*shared_isRunning_mem) {
         //Anzahl der Kinder mitzählen, um Prozesse aus wait zu holen
         children_counter++;
         sleep(rand() % 5);
@@ -288,14 +289,14 @@ int main(int argc, char* argv[]) {
             wait_sem(semid_ringspeicher, SEMAPHORE_EMPTY);
 
             //Schleife frühzeitig beim Beenden verlassen
-            if (!*shared_run_mem)
+            if (!*shared_isRunning_mem)
                 exit(0);
 
             //auf Schreibzugriff warten
             wait_sem(semid_ringspeicher, SEMAPHORE_MUTEX);
 
             //Schleife frühzeitig beim Beenden verlassen
-            if (!*shared_run_mem)
+            if (!*shared_isRunning_mem)
                 exit(0);
 
 			//Shared Memory-Bereich erzeugen und einblenden
@@ -331,7 +332,7 @@ int main(int argc, char* argv[]) {
             //Shared Memory-Bereiche ausblenden
             shmdt(shm_ringspeicher);
             shmdt(shared_child_mem);
-            shmdt(shared_run_mem);
+            shmdt(shared_isRunning_mem);
 
             return 0; //sonst gehen Kinder auch wieder in Schleife
         }
@@ -385,7 +386,7 @@ int main(int argc, char* argv[]) {
     semctl(semid_druckerkommunikation, 0, IPC_RMID, 0);
 
     //Shared Memory-Bereiche ausblenden
-    shmdt(shared_run_mem);
+    shmdt(shared_isRunning_mem);
 	shmdt(shm_ringspeicher);
 
     //Shared Memory-Bereiche löschen
@@ -398,5 +399,5 @@ int main(int argc, char* argv[]) {
 
 //Signalhandler zum Beenden des gesamten Programms
 void sigterm_handler(int signb) {
-    *shared_run_mem = 0;
+    *shared_isRunning_mem = 0;
 }

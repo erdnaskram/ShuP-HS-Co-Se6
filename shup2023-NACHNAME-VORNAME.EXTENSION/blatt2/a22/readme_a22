@@ -1,0 +1,20 @@
+Autor: <Vorname> <Nachname>
+Shell und Prozesse SS2023
+Blatt 2: Prozesse unter Linux
+Aufgabe 22
+
+Vorbedingung:
+Das aktuelle Arbeitsverzeichnis ist:
+blatt2/a22
+
+Generieranleitung:
+1. Generieren des ausführbaren Programms mit:
+gcc aufgabe02_a22.c
+
+Bedienungsanleitung:
+1. Start des ausführbaren Programms mit:
+./a.out <Param1> <Param2> <Param3> <Param4>
+2. Param1 = beliebiger Parameter, der von Vaterprozess ausgegeben wird
+3. Param2 = beliebiger Parameter, der von Kindprozess eins ausgegeben wird
+4. Param3 = beliebiger Parameter, der von Kindprozess zwei ausgegeben wird
+5. Param4 = beliebiger Parameter, der von Kindprozess drei ausgegeben wird
