@@ -11,7 +11,7 @@ Generieranleitung:
 1. Generieren des ausführbaren Programms mit:
 gcc aufgabe03_a32.c
 
-Bediengungsanleitung:
+Bedienungsanleitung:
 1. Start des ausführbaren Programms mit:
 ./a.out <Anzahl Schleifendurchläufe> <Seed>
 2. Anzahl Schleifendurchläufe = Anzahl der zu erzeugenden Zufallsnachrichten des Vaterprozesses
