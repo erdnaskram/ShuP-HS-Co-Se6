@@ -1,18 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/wait.h>
-#include <time.h>
 
 int main(int argc, char *argv[]) {
     printf("Diese Lösung wurde erstellt von <Vorname> <Nachname>\n");
 
 	//Prüfung auf zwei übergebene Argumente
     if (argc != 3) {
-        perror("korrekter Aufruf: %s <Anzahl Schleifendurchläufe> <Seed>\n", argv[0]);
+        printf("korrekter Aufruf: %s <Anzahl Schleifendurchläufe> <Seed>\n", argv[0]);
         return 1;
     }
 
@@ -67,7 +65,7 @@ int main(int argc, char *argv[]) {
 		//auf Kindprozess warten
 		int status;
 		pid_t pid = wait(&status);
-		printf("Kindprozess mit pid %i beendet mit Status %i\n", (int) pid, (int) status;
+		printf("Kindprozess mit pid %i beendet mit Status %i\n", (int) pid, (int) status);
 
         //Shared Memory-Bereich löschen
         shmctl(shm_id, IPC_RMID, NULL);

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/sem.h>
+#include <sys/wait.h>
 
 #define SEMAPHORE_MUTEX1 0
 #define SEMAPHORE_MUTEX2 1
@@ -78,7 +79,7 @@ int main(int argc, char *argv[]) {
 
 		//auf Kindprozess warten
 		int status;
-		int pid = wait(&status);
+		pid = wait(&status);
 		printf("Kindprozess mit pid %i beendet mit Status %i\n", pid, status);
 
 		//Semaphorenfeld löschen
