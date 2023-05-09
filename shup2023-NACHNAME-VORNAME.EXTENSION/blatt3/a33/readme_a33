@@ -9,7 +9,7 @@ blatt3/a33
 
 Generieranleitung:
 1. Generieren des ausführbaren Programms mit:
-gcc aufgabe03_a33.c
+gcc aufgabe03-a33.c
 
 Bedienungsanleitung:
 1. Start des ausführbaren Programms mit:

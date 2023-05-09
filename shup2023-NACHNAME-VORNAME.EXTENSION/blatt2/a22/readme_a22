@@ -9,7 +9,7 @@ blatt2/a22
 
 Generieranleitung:
 1. Generieren des ausführbaren Programms mit:
-gcc aufgabe02_a22.c
+gcc aufgabe02-a22.c
 
 Bedienungsanleitung:
 1. Start des ausführbaren Programms mit:
