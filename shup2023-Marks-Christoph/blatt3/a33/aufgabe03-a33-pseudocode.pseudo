@@ -1,0 +1,102 @@
+//Initialisiere Semaphoren
+//Semaphoren Anwendungen <-> Druckerspooler
+Semaphore mutex = 1; 		 	 //Sem-Ringspeicher[0]; Schreibzugriff auf "nextToWrite" aus Ringspeicher
+Semaphore warteschlangeLeer = 5; //Sem-Ringspeicher[1]
+Semaphore warteschlangeVoll = 0; //Sem-Ringspeicher[2]
+
+//Semaphoren Druckerspooler <-> Drucker
+Semaphore druckerwarteschlangeLeer[0] = 1;	//Sem-DruckerKommunikation[0]
+Semaphore druckerwarteschlangeLeer[1] = 1;	//Sem-DruckerKommunikation[1]
+Semaphore druckerwarteschlangeVoll[0] = 0;	//Sem-DruckerKommunikation[2]
+Semaphore druckerwarteschlangeVoll[1] = 0;	//Sem-DruckerKommunikation[3]
+
+//Shared Memory-Bereiche initialisieren
+SharedMemory warteschlange[7] = {0, 0, 0, 0, 0, 0, 0}; // 1.-5. als warteschlange, 6. NextToRead, 7. NextToWrite
+SharedMemory sharedMem_Drucker[2]; // 1. Kommunikation mit Drucker 1, 2. Kommunikation mit Drucker 2
+SharedMemory isRunning = 1; // Steuervariable für Beenden des Programms
+
+/**
+** Spooler
+*/
+void Spooler(void) {
+	Integer druckerTurn = 0;
+	while(isRunning){
+		wait(warteschlangeVoll);
+
+		auftrag = leseNaechstenAuftragAusSharedMemory_h(warteschlange);
+
+		wait(druckerwarteschlangeLeer[druckerTurn])
+
+		schreibeAufragAnDrucker_h(sharedMem_Drucker[druckerTurn], auftrag);
+
+		signal(druckerwarteschlangeVoll[druckerTurn]);
+		signal(warteschlangeLeer);
+
+		druckerTurn = naechsterDrucker_h(druckerTurn);
+	}
+}
+
+
+
+/**
+** Drucker1-Prozess
+*/
+
+void Drucker1(void) {
+	drucken(0);
+}
+
+
+/**
+** Drucker2-Prozess
+*/
+
+void Drucker2(void) {
+	drucken(1);
+}
+
+void drucken(int druckerTurn){
+	while(isRunning){
+		wait(druckerwarteschlangeVoll[druckerTurn])
+		auftrag = leseNaechstenAuftragAusSharedMemory_h(sharedMem_Drucker[druckerTurn]);
+		ausgeben_h(auftrag);
+		signal(druckerwarteschlangeLeer[druckerTurn]);
+	}
+}
+
+
+
+/**
+** Anwendungs-Prozesse
+*/
+void Anwendung(void) {
+	wait(warteschlangeLeer);
+	wait(mutex);
+
+	auftrag = erzeugeNeuenAuftrag_h();
+	schreibeAuftragInNaechstenFreienSpeicher_h(warteschlange, auftrag);
+
+	signal(mutex);
+	signal(warteschlangeVoll);
+}
+
+
+/**
+** Hauptprozess
+*/
+void Main(void) {
+	while(isRunning) {
+		fork();
+		if(istInChildProzessNachFork_h()) {
+			Anwendung();
+		}
+	}
+}
+
+
+/**
+** Signalhandler zum Beenden des Programms
+*/
+void signalhandler(){
+	isRunning = false;
+}

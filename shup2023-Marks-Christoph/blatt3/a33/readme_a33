@@ -1,0 +1,18 @@
+Autor: Christoph Marks
+Shell und Prozesse SS2023
+Blatt 3: Synchronisation
+Aufgabe 33
+
+Vorbedingung:
+Das aktuelle Arbeitsverzeichnis ist:
+blatt3/a33
+
+Generieranleitung:
+1. Generieren des ausführbaren Programms mit:
+gcc aufgabe03-a33.c
+
+Bedienungsanleitung:
+1. Start des ausführbaren Programms mit:
+./a.out
+2. Beenden des ausführbaren Programms mit Ausführen des Kommanods kill -2 <pid> oder kill -15 <pid> in einem zweiten Terminal
+3. pid = Prozess-ID des Programms

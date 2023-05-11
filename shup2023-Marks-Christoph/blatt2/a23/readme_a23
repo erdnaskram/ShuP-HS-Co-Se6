@@ -1,0 +1,18 @@
+Autor: Christoph Marks
+Shell und Prozesse SS2023
+Blatt 2: Prozesse unter Linux
+Aufgabe 23
+
+Vorbedingung:
+Das aktuelle Arbeitsverzeichnis ist:
+blatt2/a23
+
+Generieranleitung:
+1. Generieren des ausführbaren Programms mit:
+gcc aufgabe02-a23.c
+
+Bedienungsanleitung:
+1. Start des ausführbaren Programms mit:
+./a.out
+2. Beenden des Programms durch 3-maliges Ausführen den Kommandos kill -2 <pid> oder kill -15 <pid>
+3. pid = Prozess-ID des Programms
