@@ -7,7 +7,7 @@ void sigtermhandler(int);
 int counter = 0;
 
 int main (int argc, char *argv[]){
-	printf("Diese Lösung wurde erstellt von <Vorname> <Nachname>\n");
+	printf("Diese Lösung wurde erstellt von Christoph Marks\n");
 
 	printf("Programm gestartet\n");
 	printf("Bei 3-maligem SIGTERM oder SIGINT beendet sich das Programm\n");
