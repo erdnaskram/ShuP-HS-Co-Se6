@@ -7,7 +7,7 @@
 
 
 int main(int argc, char *argv[]) {
-	printf("Diese Lösung wurde erstellt von <Vorname> <Nachname>\n");
+	printf("Diese Lösung wurde erstellt von Christoph Marks\n");
 
     if (argc == 1) {
         fprintf(stderr, "Fehler: Es muss ein Programm als Aufrufparameter mitgegeben werden\n");

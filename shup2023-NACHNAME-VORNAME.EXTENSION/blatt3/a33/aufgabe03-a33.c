@@ -56,7 +56,7 @@ int get_sem(int semId, int semNum) {
 }
 
 int main(int argc, char* argv[]) {
-	printf("Diese Lösung wurde erstellt von <Vorname> <Nachname>\n");
+	printf("Diese Lösung wurde erstellt von Christoph Marks\n");
 
     printf("Parent-Prozess-ID: %d\n", getpid());
 

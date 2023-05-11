@@ -26,7 +26,7 @@ void printPrompt() {
 }
 
 int main(int argc, char *argv[]) {
-	printf("Diese Lösung wurde erstellt von <Vorname> <Nachname>\n");
+	printf("Diese Lösung wurde erstellt von Christoph Marks\n");
 
     char input[INPUT_LENGHT];
 

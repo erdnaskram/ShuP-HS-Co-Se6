@@ -5,7 +5,7 @@
 #include <sys/wait.h>
 
 int main (int argc, char *argv[]) {
-	printf("Diese Lösung wurde erstellt von <Vorname> <Nachname>\n");
+	printf("Diese Lösung wurde erstellt von Christoph Marks\n");
 
 	//Prüfen auf Aufrufparameter
 	if(argc<5) {

@@ -36,7 +36,7 @@ void signal_sem(int semid, int semnum) {
 }
 
 int main(int argc, char *argv[]) {
-	printf("Diese Lösung wurde erstellt von <Vorname> <Nachname>\n");
+	printf("Diese Lösung wurde erstellt von Christoph Marks\n");
 
     //Semaphoren anlegen
 	int semid = semget(IPC_PRIVATE, 2, 0777 | IPC_CREAT);
